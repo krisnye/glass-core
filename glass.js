@@ -1,0 +1,12 @@
+require('./www/js/String');
+require('./www/js/glass');
+require('./www/js/glass/Observable');
+require('./www/js/glass/reactive');
+require('./www/js/glass/List');
+require('./www/js/glass/Map');
+require('./www/js/glass/reactive/UriHandler');
+require('./www/js/glass/Set');
+require('./www/js/glass/reactive/Context');
+require('./www/js/glass/reactive/PathHandler');
+require('./www/js/glass/reactive/UrnHandler');
+require('./www/js/glass/test');

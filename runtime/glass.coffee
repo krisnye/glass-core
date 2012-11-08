@@ -1,0 +1,80 @@
+require:
+	String: true
+
+# runtime type tests
+isFunction: (object) -> object? and typeof object is 'function'
+isString: (object) -> object?.constructor is String
+isArray: (object) -> Array.isArray object
+isBoolean: (object) -> object? and typeof object is 'boolean'
+isNumber: (object) -> object? and typeof object is 'number'
+isObject: (object) -> typeof object is 'object' and not Array.isArray object
+isPlainObject: (object) -> object?.constructor is Object
+isPrototype: (object) -> object? and object is object.constructor.prototype
+isPrimitive: (object) -> not object? or typeof object isnt 'object'
+isPrivate: (property) -> property?[0] is '_'
+
+# testing assertions
+_getStackLocationInfo: (e, depth) ->
+    line = e.stack?.split('\n')[depth]
+    return null unless line?
+    match = /\(([\w\W]*?):(\d+):(\d+)\)/.exec line
+    return {
+        file: match[1]
+        line: parseInt match[2]
+        column: parseInt match[3]
+    }
+_throwAssertionFailure: (message) ->
+    try
+        throw new Error "Assertion failed: " + message
+    catch e
+        info = _getStackLocationInfo e, 3
+        if info?
+            _dumpFile info.file, info.line - 2, info.line + 2, info.line
+        throw e
+_dumpFile: (file, from=1, to, highlight) ->
+    fs = require 'fs'
+    return unless fs?
+    try
+        content = fs.readFileSync(file).toString()
+    catch e
+        content = "Source not found: #{e}"
+
+    console.log '------------------------------------------------'
+    console.log file
+    console.log '------------------------------------------------'
+    number = 1
+    if content?
+        lines = content.split /\r|\n/
+        to ?= lines.length
+        for line in lines
+            lineNumber = number++
+            if lineNumber >= from and lineNumber <= to
+                num = String lineNumber
+                while num.length < 3
+                    num += ' '
+                if lineNumber is highlight
+                    `console.log("\033[91m" + num + ": " + line + "\033[0m");`
+                else
+                    `console.log(num + ": " + line);`
+    console.log '------------------------------------------------'
+assert: (a) ->
+    _throwAssertionFailure JSON.stringify(a) unless a
+assertTrue: (a) ->
+    _throwAssertionFailure JSON.stringify(a) + " != true" unless a is true
+assertEquals: (a, b) ->
+    if JSON.stringify(a) isnt JSON.stringify(b)
+        _throwAssertionFailure JSON.stringify(a) + ' != ' + JSON.stringify(b)
+
+# gets a unique string identifier for any object
+getId:
+    do: ->
+        counter = 0
+        (a) ->
+            if a is null
+                return '__null__'
+            if a is undefined
+                return '__undefined__'
+            if typeof a is 'object' or typeof a is 'function'
+                return a._id ?= '__' + (counter++) + '__'
+            # 12 == "12" under this technique
+            return a.toString()
