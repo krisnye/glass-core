@@ -12,5 +12,3 @@ Set     new     x               x
         deleted x               x
 List    new     x               x
         deleted x               x
-
-TODO: Get useful source line number dumps on assertion failure.

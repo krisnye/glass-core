@@ -7,11 +7,25 @@ isString: (object) -> object?.constructor is String
 isArray: (object) -> Array.isArray object
 isBoolean: (object) -> object? and typeof object is 'boolean'
 isNumber: (object) -> object? and typeof object is 'number'
-isObject: (object) -> typeof object is 'object' and not Array.isArray object
+isObject: (object) -> typeof object is 'object'
 isPlainObject: (object) -> object?.constructor is Object
 isPrototype: (object) -> object? and object is object.constructor.prototype
-isPrimitive: (object) -> not object? or typeof object isnt 'object'
+isDate: (object) -> object?.constructor is Date
+isPrimitive: (object) -> isString(object) or isBoolean(object) or isNumber(object) or isDate(object)
 isPrivate: (property) -> property?[0] is '_'
+
+# generic utility functions
+values: (object) -> (value for key, value of object)
+
+# reactive programming functions
+uriManager:
+    get: ->
+        glass._uriManager ?= new glass.reactive.Manager.create()
+    set: (value) ->
+        glass._uriManager = value
+resolve: (baseUri, relativeUri) -> uriManager.resolve baseUri, relativeUri
+watch: (uri, handler, connect=true) -> uriManager.watch uri, handler, connect
+patch: (uri, patch) -> uriManager.patch uri, patch
 
 # testing assertions
 _getStackLocationInfo: (e, depth) ->
@@ -64,7 +78,6 @@ assertTrue: (a) ->
 assertEquals: (a, b) ->
     if JSON.stringify(a) isnt JSON.stringify(b)
         _throwAssertionFailure JSON.stringify(a) + ' != ' + JSON.stringify(b)
-
 # gets a unique string identifier for any object
 getId:
     do: ->
@@ -78,3 +91,10 @@ getId:
                 return a._id ?= '__' + (counter++) + '__'
             # 12 == "12" under this technique
             return a.toString()
+getType: (path) ->
+    array = path.split '.'
+    value = global
+    for step in path when value?
+        value = value[step]
+    throw new Error "Type not found: #{path}" unless isFunction value
+    value

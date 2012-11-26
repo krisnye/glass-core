@@ -2,6 +2,13 @@
     var global = (function() {
         return this;
     })();
+    var isFunction; //  assigned during _init_
+    var isString; //  assigned during _init_
+    var isBoolean; //  assigned during _init_
+    var isNumber; //  assigned during _init_
+    var isDate; //  assigned during _init_
+    var uriManager; //  assigned during _init_
+    var patch; //  assigned during _init_
     var _getStackLocationInfo; //  assigned during _init_
     var _throwAssertionFailure; //  assigned during _init_
     var _dumpFile; //  assigned during _init_
@@ -22,7 +29,7 @@
             return (object != null) && typeof object === 'number';
         },
         isObject: function(object) {
-            return typeof object === 'object' && !Array.isArray(object);
+            return typeof object === 'object';
         },
         isPlainObject: function(object) {
             return (object != null ? object.constructor: void 0) === Object;
@@ -30,11 +37,44 @@
         isPrototype: function(object) {
             return (object != null) && object === object.constructor.prototype;
         },
+        isDate: function(object) {
+            return (object != null ? object.constructor: void 0) === Date;
+        },
         isPrimitive: function(object) {
-            return ! (object != null) || typeof object !== 'object';
+            return isString(object) || isBoolean(object) || isNumber(object) || isDate(object);
         },
         isPrivate: function(property) {
             return (property != null ? property[0] : void 0) === '_';
+        },
+        values: function(object) {
+            var key, value, _results;
+            _results = [];
+            for (key in object) {
+                value = object[key];
+                _results.push(value);
+            }
+            return _results;
+        },
+        uriManager: {
+            get: function() {
+                var _ref;
+                return (_ref = glass._uriManager) != null ? _ref: glass._uriManager = new glass.reactive.Manager.create();
+            },
+            set: function(value) {
+                return glass._uriManager = value;
+            }
+        },
+        resolve: function(baseUri, relativeUri) {
+            return uriManager.resolve(baseUri, relativeUri);
+        },
+        watch: function(uri, handler, connect) {
+            if (connect == null) {
+                connect = true;
+            }
+            return uriManager.watch(uri, handler, connect);
+        },
+        patch: function(uri, patch) {
+            return uriManager.patch(uri, patch);
         },
         _getStackLocationInfo: function(e, depth) {
             var line, match, _ref;
@@ -134,9 +174,32 @@
                 return a.toString();
             };
         })(),
-        path: "glass"
+        getType: function(path) {
+            var array, step, value, _i, _len;
+            array = path.split('.');
+            value = global;
+            for (_i = 0, _len = path.length; _i < _len; _i++) {
+                step = path[_i];
+                if (value != null) {
+                    value = value[step];
+                }
+            }
+            if (!isFunction(value)) {
+                throw new Error("Type not found: " + path);
+            }
+            return value;
+        },
+        path: "glass",
+        uri: "global:/glass"
     };
     glass._init_ = function() {
+        isFunction = global.glass.isFunction;
+        isString = global.glass.isString;
+        isBoolean = global.glass.isBoolean;
+        isNumber = global.glass.isNumber;
+        isDate = global.glass.isDate;
+        uriManager = global.glass.uriManager;
+        patch = global.glass.patch;
         _getStackLocationInfo = global.glass._getStackLocationInfo;
         _throwAssertionFailure = global.glass._throwAssertionFailure;
         _dumpFile = global.glass._dumpFile;
