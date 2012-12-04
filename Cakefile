@@ -4,12 +4,12 @@ _ = require 'underscore'
 compilerRoot = "compiler"
 compilerModule = "./#{compilerRoot}/compiler"
 srcRoot = "runtime"
-srcExpr = /\.coffee$/
+srcExpr = /\.(coffee|pegjs)$/
 webRoot = "www"
 jsPath = "/js"
 jsRoot = "#{webRoot}#{jsPath}"
 includeFile = "#{webRoot}/includes.html"
-testName = "glass.test"
+testName = "glass.allTests"
 testModule = "./#{jsRoot}/#{testName}"
 buildDebug = "buildlog.html"
 
@@ -31,7 +31,7 @@ options =
 	module:
 		main: "glass.js"
 		prefix: "./#{jsRoot}/"
-	debug: buildDebug
+	# debug: buildDebug
 	test: testName
 
 task 'build', 'builds this library', build = ->

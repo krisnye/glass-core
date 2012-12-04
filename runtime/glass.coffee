@@ -17,15 +17,13 @@ isPrivate: (property) -> property?[0] is '_'
 # generic utility functions
 values: (object) -> (value for key, value of object)
 
-# reactive programming functions
-uriManager:
-    get: ->
-        glass._uriManager ?= new glass.reactive.Manager.create()
-    set: (value) ->
-        glass._uriManager = value
-resolve: (baseUri, relativeUri) -> uriManager.resolve baseUri, relativeUri
-watch: (uri, handler, connect=true) -> uriManager.watch uri, handler, connect
-patch: (uri, patch) -> uriManager.patch uri, patch
+# generic patch method, uses patch method built into object if present
+patch: (target, pathAndPatch...) ->
+    patch = JSONMergePatch.create.apply null, pathAndPatch
+    if isFunction target?.patch
+        target.patch patch
+    else
+        glass.JSONMergePatch.apply target, patch
 
 # testing assertions
 _getStackLocationInfo: (e, depth) ->
@@ -88,13 +86,21 @@ getId:
             if a is undefined
                 return '__undefined__'
             if typeof a is 'object' or typeof a is 'function'
-                return a._id ?= '__' + (counter++) + '__'
+                return a.id ?= '__' + (counter++) + '__'
             # 12 == "12" under this technique
             return a.toString()
 getType: (path) ->
-    array = path.split '.'
+    array = if isArray path then path else path.split '.'
     value = global
     for step in path when value?
         value = value[step]
     throw new Error "Type not found: #{path}" unless isFunction value
     value
+
+test:
+    values: ->
+        assertEquals values({a:1,b:3,c:2}), [1,3,2]
+    patch: ->
+        x = {a:{foo:1,bar:3},b:2}
+        patch x, 'a', 'foo', 5
+        assertEquals x.a.foo, 5

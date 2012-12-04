@@ -6,6 +6,7 @@
     var _decodeStep; //  assigned during _init_
     var _getLastStep; //  assigned during _init_
     var _getParent; //  assigned during _init_
+    var toArray; //  assigned during _init_
     var get; //  assigned during _init_
     var set; //  assigned during _init_
     var assertEquals; //  assigned during _init_
@@ -23,18 +24,26 @@
                 return pointer.substring(0, pointer.lastIndexOf('/'));
             }
         },
+        toArray: function(pointer) {
+            var step, _i, _len, _ref, _results;
+            _ref = pointer.substring(1).split('/');
+            _results = [];
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                step = _ref[_i];
+                _results.push(_decodeStep(step));
+            }
+            return _results;
+        },
         get: function(doc, pointer) {
             var path, step, value, _i, _len;
             value = doc;
             if (pointer.length) {
-                path = pointer.substring(1).split('/');
+                path = toArray(pointer);
                 for (_i = 0, _len = path.length; _i < _len; _i++) {
                     step = path[_i];
-                    if (! (value != null)) {
-                        continue;
+                    if (value != null) {
+                        value = value[step];
                     }
-                    step = _decodeStep(step);
-                    value = value[step];
                 }
             }
             return value;
@@ -93,6 +102,7 @@
         _decodeStep = global.glass.JSONPointer._decodeStep;
         _getLastStep = global.glass.JSONPointer._getLastStep;
         _getParent = global.glass.JSONPointer._getParent;
+        toArray = global.glass.JSONPointer.toArray;
         get = global.glass.JSONPointer.get;
         set = global.glass.JSONPointer.set;
         assertEquals = global.glass.assertEquals;

@@ -2,16 +2,19 @@
     var global = (function() {
         return this;
     })();
+    var JSONMergePatch; //  assigned during _init_
     var isFunction; //  assigned during _init_
     var isString; //  assigned during _init_
+    var isArray; //  assigned during _init_
     var isBoolean; //  assigned during _init_
     var isNumber; //  assigned during _init_
     var isDate; //  assigned during _init_
-    var uriManager; //  assigned during _init_
+    var values; //  assigned during _init_
     var patch; //  assigned during _init_
     var _getStackLocationInfo; //  assigned during _init_
     var _throwAssertionFailure; //  assigned during _init_
     var _dumpFile; //  assigned during _init_
+    var assertEquals; //  assigned during _init_
     var glass = this.glass = {
         isFunction: function(object) {
             return (object != null) && typeof object === 'function';
@@ -55,26 +58,16 @@
             }
             return _results;
         },
-        uriManager: {
-            get: function() {
-                var _ref;
-                return (_ref = glass._uriManager) != null ? _ref: glass._uriManager = new glass.reactive.Manager.create();
-            },
-            set: function(value) {
-                return glass._uriManager = value;
+        patch: function() {
+            var patch, pathAndPatch, target;
+            target = arguments[0],
+            pathAndPatch = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+            patch = JSONMergePatch.create.apply(null, pathAndPatch);
+            if (isFunction(target != null ? target.patch: void 0)) {
+                return target.patch(patch);
+            } else {
+                return glass.JSONMergePatch.apply(target, patch);
             }
-        },
-        resolve: function(baseUri, relativeUri) {
-            return uriManager.resolve(baseUri, relativeUri);
-        },
-        watch: function(uri, handler, connect) {
-            if (connect == null) {
-                connect = true;
-            }
-            return uriManager.watch(uri, handler, connect);
-        },
-        patch: function(uri, patch) {
-            return uriManager.patch(uri, patch);
         },
         _getStackLocationInfo: function(e, depth) {
             var line, match, _ref;
@@ -169,14 +162,14 @@
                     return '__undefined__';
                 }
                 if (typeof a === 'object' || typeof a === 'function') {
-                    return (_ref = a._id) != null ? _ref: a._id = '__' + (counter++) + '__';
+                    return (_ref = a.id) != null ? _ref: a.id = '__' + (counter++) + '__';
                 }
                 return a.toString();
             };
         })(),
         getType: function(path) {
             var array, step, value, _i, _len;
-            array = path.split('.');
+            array = isArray(path) ? path: path.split('.');
             value = global;
             for (_i = 0, _len = path.length; _i < _len; _i++) {
                 step = path[_i];
@@ -189,20 +182,44 @@
             }
             return value;
         },
+        test: {
+            values: function() {
+                return assertEquals(values({
+                    a: 1,
+                    b: 3,
+                    c: 2
+                }), [1, 3, 2]);
+            },
+            patch: function() {
+                var x;
+                x = {
+                    a: {
+                        foo: 1,
+                        bar: 3
+                    },
+                    b: 2
+                };
+                patch(x, 'a', 'foo', 5);
+                return assertEquals(x.a.foo, 5);
+            }
+        },
         path: "glass",
         uri: "global:/glass"
     };
     glass._init_ = function() {
+        JSONMergePatch = global.glass.JSONMergePatch;
         isFunction = global.glass.isFunction;
         isString = global.glass.isString;
+        isArray = global.glass.isArray;
         isBoolean = global.glass.isBoolean;
         isNumber = global.glass.isNumber;
         isDate = global.glass.isDate;
-        uriManager = global.glass.uriManager;
+        values = global.glass.values;
         patch = global.glass.patch;
         _getStackLocationInfo = global.glass._getStackLocationInfo;
         _throwAssertionFailure = global.glass._throwAssertionFailure;
         _dumpFile = global.glass._dumpFile;
+        assertEquals = global.glass.assertEquals;
         delete glass._init_;
     }
 }).call()

@@ -8,12 +8,14 @@ _getParent: (pointer) ->
         null
     else
         pointer.substring(0, pointer.lastIndexOf('/'))
+toArray: (pointer) ->
+    for step in pointer.substring(1).split('/')
+        _decodeStep step
 get: (doc, pointer) ->
     value = doc
     if pointer.length
-        path = pointer.substring(1).split('/')
+        path = toArray pointer
         for step in path when value?
-            step = _decodeStep step
             value = value[step]
     value
 set: (doc, pointer, value) ->
