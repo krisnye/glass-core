@@ -16,6 +16,20 @@ isPrivate: (property) -> property?[0] is '_'
 
 # generic utility functions
 values: (object) -> (value for key, value of object)
+sum: () ->
+    total = 0
+    for a in arguments when a?
+        if Array.isArray a
+            for item in a
+                total += sum item
+        else
+            number = Number a
+            if not isNaN number
+                total += number
+    total
+
+# should be a method built into Array
+contains: (array, item) -> array?.lastIndexOf?(item) >= 0
 
 # generic patch method, uses patch method built into object if present
 patch: (target, pathAndPatch...) ->

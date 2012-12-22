@@ -10,6 +10,7 @@
     var isNumber; //  assigned during _init_
     var isDate; //  assigned during _init_
     var values; //  assigned during _init_
+    var sum; //  assigned during _init_
     var patch; //  assigned during _init_
     var _getStackLocationInfo; //  assigned during _init_
     var _throwAssertionFailure; //  assigned during _init_
@@ -57,6 +58,30 @@
                 _results.push(value);
             }
             return _results;
+        },
+        sum: function() {
+            var a, item, number, total, _i, _j, _len, _len1;
+            total = 0;
+            for (_i = 0, _len = arguments.length; _i < _len; _i++) {
+                a = arguments[_i];
+                if (a != null) {
+                    if (Array.isArray(a)) {
+                        for (_j = 0, _len1 = a.length; _j < _len1; _j++) {
+                            item = a[_j];
+                            total += sum(item);
+                        }
+                    } else {
+                        number = Number(a);
+                        if (!isNaN(number)) {
+                            total += number;
+                        }
+                    }
+                }
+            }
+            return total;
+        },
+        contains: function(array, item) {
+            return (array != null ? typeof array.lastIndexOf === "function" ? array.lastIndexOf(item) : void 0 : void 0) >= 0;
         },
         patch: function() {
             var patch, pathAndPatch, target;
@@ -215,6 +240,7 @@
         isNumber = global.glass.isNumber;
         isDate = global.glass.isDate;
         values = global.glass.values;
+        sum = global.glass.sum;
         patch = global.glass.patch;
         _getStackLocationInfo = global.glass._getStackLocationInfo;
         _throwAssertionFailure = global.glass._throwAssertionFailure;

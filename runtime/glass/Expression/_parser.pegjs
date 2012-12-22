@@ -1,19 +1,29 @@
 {
+    //  this fixes a bug where the generated parser is missing a quote function
+    global.quote = function(value) {
+        return value;
+    }
     //  shorthand to create a new expression
     function expr(op, args) {
+        if (args == null)
+            args = []
         return new glass.Expression(op, args);
     }
     //  left associates operations
-    function joinLeft(e, arrayOfOps) {
+    function joinLeft(e, arrayOfOps, op) {
         while (arrayOfOps.length > 0) {
             array = arrayOfOps.shift();
-            e = expr(array[0], [e,array[1]]);
+            e = expr(op || array[0], [e,array[1]]);
         }
         return e;
     }
-    function unaryRight(ops, e) {
+    function unaryRight(ops, e, map) {
         while (ops.length > 0) {
-            e = expr(ops.pop(), [e]);
+            op = ops.pop();
+            if (map.hasOwnProperty(op))
+                op = map[op];
+            if (op != null)
+                e = expr(op, [e]);
         }
         return e;
     }
@@ -32,6 +42,21 @@
         }
         return left;
     }
+    function flatten(array) {
+        var flat = []
+        for (var i = 0; i < array.length; i++) {
+            var item = array[i];
+            if (Array.isArray(item)) {
+                for (var k = 0; k < item.length; k++) {
+                    flat.push(item[k]);
+                }
+            }
+            else {
+                flat.push(item);
+            }
+        }
+        return flat;
+    }
 }
 
 start = expression
@@ -42,13 +67,14 @@ conditional = e:or args:("?" b:expression ":" c:expression {return [b,c];})* {
         }
         return e;
     }
-or = a:and b:(("or") and)* { return joinLeft(a,b); }
-and = a:equality b:(("and") equality)* { return joinLeft(a,b); }
+or = a:and b:(("||" / "or") and)* { return joinLeft(a,b, "||"); }
+and = a:equality b:(("&&" / "and") equality)* { return joinLeft(a,b, "&&"); }
 equality = a:rel b:(("==" / "!=") rel)* { return joinLeft(a,b); }
 rel = a:sum b:(("<=" / ">=" / "<" / ">") sum)* { return joinLeft(a,b); }
 sum = a:product b:(("+" / "-") product)* { return joinLeft(a,b); }
-product = a:not b:(("*" / "div" / "mod") not)* { return joinLeft(a,b); }
-not = ops:(s op:("!" / "~" / "+" / "-") { return op; })* b:primary { return unaryRight(ops,b); }
+product = a:not b:(("*" / "/" / "%") not)* { return joinLeft(a,b); }
+not = ops:(s op:("!" / "+" / "-") { return op; })* b:primary
+    { return unaryRight(ops,b,{"+":null,"-":"neg"}); }
 primary = s a:(group / literal / path) s { return a; }
 group = "(" a:expression ")" { return a; }
 literal = s a:(boolean / number / string / array / object) s { return a; }
@@ -66,39 +92,32 @@ values = first:expression? args:("," b:expression {return b;})* {
     if (first != "") { args.unshift(first); } return args;
 }
 object = "{" a:keyvalues "}" { return expr("object", a); }
-keyvalue = s a:string s ":" b:expression { return [a,b]; }
+keyvalue = s a:(string/id) s ":" b:expression { return [a,b]; }
 keyvalues = first:keyvalue? rest:("," b:keyvalue {return b;})* {
-    if (first) { rest.unshift(first); } return rest;
+    if (first) { rest.unshift(first); } return flatten(rest);
 }
-ref = a:("//" / "/" / "$" / "**" / "*" / ".." / ".") b:slashProperty? {
-        e = expr(a); if (b) { b.args.unshift(e); e = b; } return e;
-    }
-    / a:id { return expr("ref", [a]); }
-id = a:[a-z_]+ b:[a-z_0-9]* { return a.join('') + b.join(''); }
-property = "/" a:slashProperty { return a; }
-         / "{" a:expression "}" { return expr("{}", [a]); }     //  locally scoped expression
-         / "[" a:expression "]" { return expr("[]", [a]); }     //  predicate
-slashProperty = a:(id/number/string) { return expr("/", [a]); }
-            / a:(".." / "*") { return expr(a, []); }
+id = a:[a-zA-Z_]+ b:[a-zA-Z_0-9]* { return a.join('') + b.join(''); }
 s "space" = [ ]* { return ''; }
 
+root = "$" { return [expr("global")]; }
+     / "@" { return [expr("root")]; }
+     / a:"."+ { return [expr("ancestor", [Math.max(0, a.length-1)])]; }
+     / a:rootOrStep { return [expr("ancestor", [0]), a]; }
+
+rootOrStep = "."? a:id { return expr("property", [a]); }
+           / "."? "*" { return expr("values"); }
+           / "?(" a:expression ")" { return expr("filter", [a]); }
+
+step = rootOrStep
+     / "(" a:values ")" { return expr("call", a); }
+     / "[" a:expression "]" { return expr("property", [a]); }
+     / "{" a:expression "}" { return expr("eval", [a]); }
+
 path = a:root b:step* {
-        while (b.length) {
-            a = joinPath(a, b.shift());
-        }
-        return a;
+    path = a.concat(b);
+    result = current = path.shift();
+    while (path.length) {
+        current = current.next = path.shift();
     }
-root = a:implicitDotRoot b:dotStep? { return joinPath(a,b); }
-     / explicitDotRoot
-step = "." a:dotStep { return a; }
-     / noDotStep
-implicitDotRoot = "/"  { return expr("root"); }
-                / "@" { return expr("this"); }
-                / "." a:"."+ { return expr("ancestor", [a.length]); }
-explicitDotRoot = a:id { return expr("ref", [a]); }
-                / "*" { return expr("values", []); }
-dotStep = a:(id / string / number) { return expr("get", [a]); }
-        / "*" { return expr("values", []); }
-noDotStep = "{" a:expression "}" { return expr("eval", [a]); }
-          / "[" a:expression "]" { return expr("pred", [a]); }
-          / "(" a:values ")" { return expr("call", [a]); }
+    return result;
+}
