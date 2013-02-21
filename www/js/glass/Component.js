@@ -100,7 +100,6 @@
         "glass.Component": true,
         "glass.Observable": true
     };
-    Component.uri = "global:/glass/Component";
     (function() {
         var baseTypes = [Observable];
         var i, j, baseType, a, b;

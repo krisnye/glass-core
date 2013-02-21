@@ -228,8 +228,7 @@
                 return assertEquals(x.a.foo, 5);
             }
         },
-        path: "glass",
-        uri: "global:/glass"
+        path: "glass"
     };
     glass._init_ = function() {
         JSONMergePatch = global.glass.JSONMergePatch;

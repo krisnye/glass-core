@@ -62,8 +62,7 @@
                 b: void 0
             }));
         },
-        path: "glass.JSONMergePatch",
-        uri: "global:/glass/JSONMergePatch"
+        path: "glass.JSONMergePatch"
     };
     JSONMergePatch._init_ = function() {
         apply = global.glass.JSONMergePatch.apply;

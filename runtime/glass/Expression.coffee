@@ -3,7 +3,6 @@ constructor: (op, args) ->
     @args = args if args?
     @operation = operations[op]
     throw new Error "Operation not found: #{op}" unless @operation
-    @operation.initialize?.call @
     @
 properties:
     op:
@@ -161,7 +160,7 @@ operations:
         evaluate: (a) ->
             context = getContext()
             # support negative indexers relative to the end
-            if isNumber(a) and a < 0 && isNumber(context.length)
+            if typeof a is 'number' and a < 0 && context.length?
                 a += context.length
             context[a]
     path:
@@ -200,6 +199,8 @@ operations:
         format: (a) -> "{#{a}}"
         evaluate: (a) -> a
 private:
+    # this should be referenced by contains, not
+    contains: (array, item) -> array?.lastIndexOf?(item) >= 0
     evalPath: (path, context=global) ->
         for step in path when context?
             context = context[step]
@@ -243,7 +244,7 @@ evaluate: (expression, context=global) ->
     # there may have been something left on the stack if there was an exception
     stack.length = 0
     e expression, context
-isIdentifier: (a) -> isString(a) and /^[a-zA-Z_][a-zA-Z_0-9]*$/.test a
+isIdentifier: (a) -> typeof a is 'string' and /^[a-zA-Z_][a-zA-Z_0-9]*$/.test a
 isExpression: (expression) -> expression?.constructor is Expression
 toBoolean: (value) ->
     if Array.isArray value

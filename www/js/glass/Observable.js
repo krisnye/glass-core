@@ -188,7 +188,6 @@
     Observable.implements = {
         "glass.Observable": true
     };
-    Observable.uri = "global:/glass/Observable";
     Object.defineProperties(Observable.prototype, Observable.properties);
     Observable._init_ = function() {
         JSONMergePatch = global.glass.JSONMergePatch;

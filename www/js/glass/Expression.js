@@ -9,12 +9,8 @@
     var isIdentifier; //  assigned during _init_
     var isExpression; //  assigned during _init_
     var toBoolean; //  assigned during _init_
-    var isString; //  assigned during _init_
-    var isNumber; //  assigned during _init_
-    var contains; //  assigned during _init_
     var assert; //  assigned during _init_
     var Expression = this.Expression = function Expression(op, args) {
-        var _ref;
         this.op = op;
         if (args != null) {
             this.args = args;
@@ -22,9 +18,6 @@
         this.operation = operations[op];
         if (!this.operation) {
             throw new Error("Operation not found: " + op);
-        }
-        if ((_ref = this.operation.initialize) != null) {
-            _ref.call(this);
         }
         return this;
     };
@@ -330,7 +323,7 @@
             evaluate: function(a) {
                 var context;
                 context = getContext();
-                if (isNumber(a) && a < 0 && isNumber(context.length)) {
+                if (typeof a === 'number' && a < 0 && (context.length != null)) {
                     a += context.length;
                 }
                 return context[a];
@@ -430,7 +423,7 @@
         return e(expression, context);
     };
     Expression.isIdentifier = function(a) {
-        return isString(a) && /^[a-zA-Z_][a-zA-Z_0-9]*$/.test(a);
+        return typeof a === 'string' && /^[a-zA-Z_][a-zA-Z_0-9]*$/.test(a);
     };
     Expression.isExpression = function(expression) {
         return (expression != null ? expression.constructor: void 0) === Expression;
@@ -635,7 +628,9 @@
     Expression.implements = {
         "glass.Expression": true
     };
-    Expression.uri = "global:/glass/Expression";
+    var contains = function(array, item) {
+        return (array != null ? typeof array.lastIndexOf === "function" ? array.lastIndexOf(item) : void 0 : void 0) >= 0;
+    };
     var evalPath = function(path, context) {
         var step, _i, _len;
         if (context == null) {
@@ -695,9 +690,6 @@
         isIdentifier = global.glass.Expression.isIdentifier;
         isExpression = global.glass.Expression.isExpression;
         toBoolean = global.glass.Expression.toBoolean;
-        isString = global.glass.isString;
-        isNumber = global.glass.isNumber;
-        contains = global.glass.contains;
         assert = global.glass.assert;
         delete Expression._init_;
     }

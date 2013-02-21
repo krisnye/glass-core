@@ -95,8 +95,7 @@
             assertEquals(set(doc, "/foo/0", 10), 10);
             return assertEquals(doc.foo[0], 10);
         },
-        path: "glass.JSONPointer",
-        uri: "global:/glass/JSONPointer"
+        path: "glass.JSONPointer"
     };
     JSONPointer._init_ = function() {
         _decodeStep = global.glass.JSONPointer._decodeStep;

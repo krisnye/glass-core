@@ -56,6 +56,5 @@
     glass.JSONPointer._init_();
     glass.Observable._init_();
     glass.Component._init_();
-    glass.Container._init_();
     glass.Expression._parser._init_();
 }).call(glass)
