@@ -1,9 +1,0 @@
-require('./www/js/String');
-require('./www/js/glass');
-require('./www/js/glass/Expression');
-require('./www/js/glass/JSONMergePatch');
-require('./www/js/glass/JSONPointer');
-require('./www/js/glass/Observable');
-require('./www/js/glass/Component');
-require('./www/js/glass/Expression/_parser');
-require('./www/js/glass/allTests');

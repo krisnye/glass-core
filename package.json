@@ -1,0 +1,25 @@
+{
+  "name": "glass",
+  "version": "0.0.0",
+  "description": "Glass platform",
+  "main": "lib/glass.coffee",
+  "scripts": {
+    "test": "cake test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krisnye/glass.git"
+  },
+  "keywords": [
+    "Glass",
+    "Javascript",
+    "Coffee",
+    "Coffeescript"
+  ],
+  "author": "Kris Nye",
+  "license": "BSD",
+  "gitHead": "a04aeedc5b579f7694723ff5567f53c6fdaaed6c",
+  "devDependencies": {
+    "glass-build": "~0.0.9"
+  }
+}
