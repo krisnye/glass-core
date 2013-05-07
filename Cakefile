@@ -1,6 +1,16 @@
+config =
+    name: 'glass'
+    input: 'src'
+    node:
+        output: 'node'
+    browser:
+        output: 'browser'
 
-task 'build', -> console.log 'build'
+builder = require "./#{config.input}/build"
+utility = require "./#{config.input}/build/utility"
 
-task 'watch', -> console.log 'watch'
-
-task 'test', -> console.log 'test'
+task 'build', -> builder.build config
+task 'watch', -> builder.watch config
+task 'test', -> builder.test config
+task 'observe', ->
+    console.log Object.observe

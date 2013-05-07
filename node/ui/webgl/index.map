@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "file": "index.js",
+  "sourceRoot": "..\\..\\..",
+  "sources": [
+    "src\\ui\\webgl\\index.coffee"
+  ],
+  "names": [],
+  "mappings": ";AAAA;CAAA,KAAA,yCAAA;;CAAA,CAAA,CAAO,CAAP,GAAO,KAAA;;CAAP,CAEA,CAAiB,GAAX,CAAN;;CAFA,CAKA,GAAA,CAAM,CAAN,IAAsB;;CAGtB;CAAA,MAAA,IAAA;uBAAA;CACI,CAA6B,CAArB,CAAR,CAAmB,EAAX;CADZ,EARA;CAAA"
+}
