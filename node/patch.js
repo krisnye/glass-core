@@ -113,8 +113,7 @@
 
   if (typeof describe === 'function') {
     assert = require('assert');
-    describe('patch', function() {
-      it('rocks', function() {});
+    describe('glass.patch', function() {
       return it('should work', function(done) {
         var source, target, unwatch;
 

@@ -57,7 +57,7 @@ module.exports = exports =
 
 if typeof describe is 'function'
     assert = require 'assert'
-    describe 'utility', ->
+    describe 'glass.build.utility', ->
         describe 'isMatch', ->
             it "should work", ->
                 assert isMatch "foo.js", ".js"

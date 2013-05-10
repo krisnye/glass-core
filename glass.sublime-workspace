@@ -347,11 +347,53 @@
 	},
 	"buffers":
 	[
+		{
+			"file": "src/ui/Control.coffee",
+			"settings":
+			{
+				"buffer_size": 452,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "src/ui/html/Control.coffee",
+			"settings":
+			{
+				"buffer_size": 2183,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "src/ui/html/index.coffee",
+			"settings":
+			{
+				"buffer_size": 1111,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "src/Component.coffee",
+			"settings":
+			{
+				"buffer_size": 12607,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"contents": "Searching 16 files for \"debugger\" (regex)\n\nC:\\NewProjects\\glass\\src\\ui\\html\\Control.coffee:\n    7          properties:\n    8              initialize: initialize = ->\n    9:                 debugger\n   10                  @inner initialize\n   11                  # we check for element after child initialization\n\n1 match in 1 file\n\n\n\nSearching 16 files for \"should be work\" (regex)\n\nC:\\NewProjects\\glass\\src\\ui\\html\\index.coffee:\n   29          if global.window?\n   30              describe 'createElement', ->\n   31:                 it 'should be work', ->\n   32                      element = exports.createElement '<div id=\"test\">Test</div>'\n   33                      assert.equal element.getAttribute('id'), 'test'\n\n1 match in 1 file\n",
+			"settings":
+			{
+				"buffer_size": 739,
+				"line_ending": "Windows",
+				"name": "Find Results",
+				"scratch": true
+			}
+		}
 	],
-	"build_system": "",
+	"build_system": "test",
 	"command_palette":
 	{
-		"height": 58.0,
+		"height": 35.0,
 		"selected_items":
 		[
 			[
@@ -400,18 +442,43 @@
 	},
 	"file_history":
 	[
+		"/C/NewProjects/glass/src/index.coffee",
+		"/C/NewProjects/glass/src/global.coffee",
+		"/C/NewProjects/glass/src/Enum.coffee",
+		"/C/NewProjects/glass/src/ui/index.coffee",
+		"/C/NewProjects/glass/src/ui/webgl/index.coffee",
+		"/C/NewProjects/glass/src/Component.coffee",
+		"/C/NewProjects/glass/src/ui/html/index.coffee",
+		"/C/Users/Kris/Desktop/glasscore/src/glass/math/Vector.coffee",
+		"/C/NewProjects/glass/src/ui/Element.coffee",
+		"/C/NewProjects/glass/src/ui/Control.coffee",
+		"/C/NewProjects/glass/src/build/utility.coffee",
+		"/C/NewProjects/glass/src/patch.coffee",
+		"/C/Users/Kris/Desktop/glasscore/src/glass/ui/Element.coffee",
+		"/C/Users/Kris/Desktop/glasscore/src/glass/ui/Time.coffee",
+		"/C/Users/Kris/Desktop/glasscore/src/glass/ui/Clock.coffee",
+		"/C/NewProjects/glass/node/ui/Color.coffee",
+		"/C/Users/Kris/Desktop/glasscore/src/glass/Color.coffee",
+		"/C/Users/Kris/Desktop/glasscore/src/glass/graphics/gl.coffee",
+		"/C/NewProjects/glass/src/ui/webgl/constants.coffee",
+		"/C/Users/Kris/Desktop/glasscore/src/glass/Enum.coffee",
+		"/C/NewProjects/glass/package.json",
+		"/C/NewProjects/glass/browser/glass.js",
+		"/C/Users/Kris/Desktop/glasscore/src/glass/math/Matrix.coffee",
 		"/C/Users/Kris/AppData/Roaming/Sublime Text 2/Packages/User/Preferences.sublime-settings",
+		"/C/NewProjects/glass/glass.sublime-project",
+		"/C/NewProjects/glass/browser/glass.map",
 		"/C/NewProjects/glass/src/build/index.coffee",
+		"/C/NewProjects/glass/error.coffee",
 		"/C/NewProjects/glass/Cakefile",
+		"/C/NewProjects/glass/src/package.json",
 		"/C/NewProjects/glass/browser/index.html",
 		"/C/NewProjects/glass/index.html",
-		"/C/NewProjects/glass/src/build/utility.coffee",
 		"/C/NewProjects/glass/README.md",
 		"/C/NewProjects/glass/glass-test-browser.bjs",
 		"/C/NewProjects/glass/build/index.coffee",
 		"/C/NewProjects/glass/build/utility.coffee",
 		"/C/Users/Kris/Downloads/attachment.ics",
-		"/C/NewProjects/glass/package.json",
 		"/C/Projects/glass-path/Cakefile",
 		"/C/NewProjects/glass/node_modules/mocha/mocha.js",
 		"/C/Projects/glass-path/www/browser.map",
@@ -502,32 +569,7 @@
 		"/C/Projects/Viewpath3/Debug/war/admin/tasks/sendProjectStatusEmail.jsp",
 		"/C/Projects/Viewpath3/Debug/war/admin/cron/sendProjectStatusEmails.jsp",
 		"/C/Projects/gototags/Platform/src/server/ajax.coffee",
-		"/C/Projects/gototags/Platform/src/server/errorHandler.coffee",
-		"/C/Projects/gototags/Platform/src/server/config.coffee",
-		"/C/Projects/Viewpath3/Debug/war/src/vp/app/CriticalPathCalculator.js",
-		"/C/Projects/Viewpath3/Debug/war/src/vp/app/GanttCellTaskBox.js",
-		"/C/Projects/Viewpath3/Debug/war/src/vp/app/ResourceSheet.js",
-		"/C/Projects/Viewpath3/Debug/war/src/vp/vp.js",
-		"/C/Projects/Viewpath3/Debug/war/src/vp/Global.js",
-		"/C/Projects/Viewpath3/Debug/war/src/vp/data/Path.js",
-		"/C/Projects/Viewpath3/Debug/war/src/vp/app/ProjectEditDialog.js",
-		"/C/Projects/Viewpath3/Debug/war/notify/projectStatusHtml.jsp",
-		"/C/Projects/Viewpath3/Debug/war/src/vp/data/DataSet.js",
-		"/C/Projects/Viewpath3/Debug/war/src/vp/data/Table.js",
-		"/C/Projects/Viewpath3/Debug/war/src/vp/data/Record.js",
-		"/C/Projects/Viewpath3/Debug/war/src/vp/app/ResourceTab.js",
-		"/C/Projects/Viewpath3/Debug/war/src/vp/app/GanttProjectMilestones.js",
-		"/C/Projects/gototags/PlatformClientJava/Platform/src/com/gototags/platform/Test.java",
-		"/C/Projects/gototags/Platform/src/tools/minify.coffee",
-		"/C/Projects/Viewpath3/Debug/war/src/vp/app/TimeSheet.js",
-		"/C/Projects/Viewpath3/Debug/war/src/vp/ui/grid/ForeignColumn.js",
-		"/C/Projects/Viewpath3/Debug/war/src/vp/ui/form/TextField.js",
-		"/C/Users/Kris/AppData/Roaming/npm/cake",
-		"/C/Users/Kris/options.txt",
-		"/C/Projects/Viewpath3/Debug/war/src/vp/app/GanttCell.js",
-		"/C/Projects/Viewpath3/Debug/war/src/vp/app/ProgressChart.js",
-		"/C/Projects/Viewpath3/Debug/war/src/vp/ui/grid/Grid.js",
-		"/C/Projects/Viewpath3/Debug/war/src/vp/ui/grid/Column.js"
+		"/C/Projects/gototags/Platform/src/server/errorHandler.coffee"
 	],
 	"find":
 	{
@@ -535,9 +577,10 @@
 	},
 	"find_in_files":
 	{
-		"height": 0.0,
+		"height": 147.0,
 		"where_history":
 		[
+			"C:\\NewProjects\\glass\\src",
 			"C:\\Projects\\gototags\\Platform\\src\\client",
 			"C:\\Projects\\gototags\\Platform\\src\\client\\gototags",
 			"C:\\Projects\\gototags\\Platform\\src\\client",
@@ -664,8 +707,7 @@
 			"C:\\Projects\\schematic\\src",
 			"C:\\Projects\\gototags\\Platform\\src\\server",
 			"C:\\Projects\\schematic\\src",
-			"C:\\Projects\\gototags\\Platform\\src\\server",
-			"C:\\Projects\\schematic\\src"
+			"C:\\Projects\\gototags\\Platform\\src\\server"
 		]
 	},
 	"find_state":
@@ -673,6 +715,35 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"should be work",
+			"debugger",
+			"Control",
+			"console.log",
+			"Color",
+			"Component",
+			"Element",
+			"@inner",
+			"_subclass_",
+			"subclass",
+			"constants",
+			"Enum",
+			"toString",
+			"glass/Component",
+			"toString",
+			"sugar",
+			"gl-matrix",
+			"\\bui\\b",
+			"console.log",
+			"debugger",
+			"\n                ",
+			"console\\.log",
+			"debugger",
+			"return",
+			"config.output",
+			"output",
+			"debugger",
+			"sugar",
+			"clone",
 			"krisnye@gmail.com",
 			"getCJSifyCommand",
 			"require\\(",
@@ -771,39 +842,10 @@
 			"doCalculation",
 			"calculateCriticalPathTasks",
 			"CriticalPathCalculator",
-			"Show Critical",
-			"LocalStorageProvider",
-			"CookieProvider",
-			"LocalStorageProvider",
-			"Provider",
-			"StateProvider",
-			"UserSettingType",
-			"vp.app.UserSettings",
-			"User",
-			"UserSettings",
-			"User",
-			"UserSetting",
-			"UserSettings",
-			"UserSe",
-			"UserSetting",
-			"createMenu",
-			"Set Baseline",
-			"parent\\.get",
-			"subclass",
-			"\\.name",
-			".name",
-			"name",
-			"normalize",
-			"baseClass",
-			"getBaseDefiningClass",
-			"constructor",
-			"underride",
-			"getBaseDefiningClass",
-			"underride",
-			"rootDefiningClass"
+			"Show Critical"
 		],
 		"highlight": true,
-		"in_selection": true,
+		"in_selection": false,
 		"preserve_case": false,
 		"regex": true,
 		"replace_history":
@@ -818,8 +860,166 @@
 	"groups":
 	[
 		{
+			"selected": 2,
 			"sheets":
 			[
+				{
+					"buffer": 0,
+					"file": "src/ui/Control.coffee",
+					"settings":
+					{
+						"buffer_size": 452,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								137,
+								137
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/CoffeeScript/CoffeeScript.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "src/ui/html/Control.coffee",
+					"settings":
+					{
+						"buffer_size": 2183,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1613,
+								1613
+							]
+						],
+						"settings":
+						{
+							"auto_name": "",
+							"syntax": "Packages/CoffeeScript/CoffeeScript.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 888.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "src/ui/html/index.coffee",
+					"settings":
+					{
+						"buffer_size": 1111,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								249,
+								249
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/CoffeeScript/CoffeeScript.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "src/Component.coffee",
+					"settings":
+					{
+						"buffer_size": 12607,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								726,
+								726
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/CoffeeScript/CoffeeScript.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 590.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"settings":
+					{
+						"buffer_size": 739,
+						"regions":
+						{
+							"match":
+							{
+								"flags": 112,
+								"regions":
+								[
+									[
+										189,
+										197
+									],
+									[
+										538,
+										552
+									]
+								],
+								"scope": ""
+							}
+						},
+						"selection":
+						[
+							[
+								549,
+								549
+							]
+						],
+						"settings":
+						{
+							"detect_indentation": false,
+							"output_tag": 2,
+							"result_base_dir": "",
+							"result_file_regex": "^([A-Za-z\\\\/<].*):$",
+							"result_line_regex": "^ +([0-9]+):",
+							"scroll_past_end": true,
+							"syntax": "Packages/Default/Find Results.hidden-tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 407.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				}
 			]
 		}
 	],
@@ -856,7 +1056,7 @@
 	"menu_visible": true,
 	"output.exec":
 	{
-		"height": 142.0
+		"height": 232.0
 	},
 	"output.find_results":
 	{
@@ -872,6 +1072,10 @@
 		"height": 0.0,
 		"selected_items":
 		[
+			[
+				"-p",
+				"/C/NewProjects/glass/glass.sublime-project"
+			]
 		],
 		"width": 0.0
 	},

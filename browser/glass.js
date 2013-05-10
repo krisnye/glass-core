@@ -51,27 +51,32 @@
       };
     }();
   require.define('/index.coffee', function (module, exports, __dirname, __filename) {
-    var exports;
     require('/global.coffee', module);
-    global.glass = module.exports = exports = {
+    global.glass = exports;
+    Object.merge(exports, {
       Component: require('/Component.coffee', module),
-      Enum: require('/Enum.coffee', module),
+      Enum: require('/Enum.coffee', module)
+    });
+    Object.merge(exports, {
       patch: require('/patch.coffee', module),
       ui: require('/ui\\index.coffee', module)
-    };
+    });
   });
   require.define('/ui\\index.coffee', function (module, exports, __dirname, __filename) {
-    var exports;
-    module.exports = exports = {
+    Object.merge(exports, {
+      Color: require('/ui\\Color.coffee', module),
+      Control: require('/ui\\Control.coffee', module),
+      Element: require('/ui\\Element.coffee', module)
+    });
+    Object.merge(exports, {
       canvas: {},
-      html: {},
+      html: require('/ui\\html\\index.coffee', module),
       webgl: require('/ui\\webgl\\index.coffee', module)
-    };
+    });
   });
   require.define('/ui\\webgl\\index.coffee', function (module, exports, __dirname, __filename) {
-    var Enum, exports, key, value, webglConstants;
+    var Enum, key, value, webglConstants;
     Enum = require('/Enum.coffee', module);
-    module.exports = exports = {};
     Object.merge(exports, require('/..\\node_modules\\gl-matrix\\dist\\gl-matrix.js', module));
     for (key in webglConstants = require('/ui\\webgl\\constants.coffee', module)) {
       value = (webglConstants = require('/ui\\webgl\\constants.coffee', module))[key];
@@ -1812,133 +1817,48 @@
       return Enum;
     }();
   });
-  require.define('/patch.coffee', function (module, exports, __dirname, __filename) {
-    var apply, assert, canWatch, combine, exports, watch;
-    require('/global.coffee', module);
-    apply = function (target, values, deleteUndefined) {
-      var key, patchedValue, value;
-      if (null == deleteUndefined)
-        deleteUndefined = true;
-      if (!((null != values ? values.constructor : void 0) === Object))
-        return Object.clone(values, true);
-      if ((null != target ? target.constructor : void 0) !== Object)
-        target = {};
-      for (key in values) {
-        value = values[key];
-        patchedValue = apply(target[key], value, deleteUndefined);
-        if (value === void 0 && deleteUndefined) {
-          delete target[key];
+  require.define('/ui\\html\\index.coffee', function (module, exports, __dirname, __filename) {
+    var assert;
+    Object.merge(exports, {
+      isNode: function (a) {
+        return null != (null != a ? a.nodeName : void 0);
+      },
+      isElement: function (a) {
+        return null != (null != a ? a.tagName : void 0);
+      },
+      createElement: function () {
+        var creator;
+        if (null != (null != global.document ? global.document.createElement : void 0)) {
+          creator = global.document.createElement('div');
+          return function (html) {
+            var element;
+            creator.innerHTML = html;
+            element = creator.firstChild;
+            if (null != element)
+              creator.removeChild(element);
+            return element;
+          };
         } else {
-          target[key] = patchedValue;
+          return function () {
+            throw new Error("Can't create elements without document");
+          };
         }
-      }
-      return target;
-    };
-    combine = function (patch1, patch2) {
-      return apply(patch1, patch2, false);
-    };
-    canWatch = function (object) {
-      return null != object && typeof object === 'object';
-    };
-    watch = function (object, handler, callInitial) {
-      var pendingPatch, processPatch, subWatchers, watcher;
-      if (null == callInitial)
-        callInitial = true;
-      if (!canWatch(object))
-        throw new Error('Cannot watch: ' + object);
-      subWatchers = {};
-      pendingPatch = null;
-      processPatch = function (patchValues) {
-        var name, value;
-        for (name in patchValues) {
-          if ('function' === typeof subWatchers[name])
-            subWatchers[name]();
-          value = object[name];
-          if (canWatch(value))
-            (function () {
-              var saveName, subHandler;
-              saveName = name;
-              subHandler = function (patch) {
-                var basePatch;
-                basePatch = {};
-                basePatch[saveName] = patch;
-                if (null != pendingPatch) {
-                  return pendingPatch = combine(pendingPatch, basePatch);
-                } else {
-                  return handler(basePatch);
-                }
-              };
-              return subWatchers[saveName] = watch(value, subHandler, false);
-            }());
-        }
-      };
-      watcher = function (changes) {
-        var change;
-        pendingPatch = {};
-        for (var i$ = 0, length$ = changes.length; i$ < length$; ++i$) {
-          change = changes[i$];
-          pendingPatch[change.name] = object[change.name];
-        }
-        processPatch(pendingPatch);
-        return process.nextTick(function () {
-          handler(pendingPatch);
-          return pendingPatch = null;
-        });
-      };
-      processPatch(object);
-      Object.observe(object, watcher);
-      return function () {
-        Object.unobserve(object, watcher);
-        return function (accum$) {
-          var key, value;
-          for (key in subWatchers) {
-            value = subWatchers[key];
-            accum$.push(value());
-          }
-          return accum$;
-        }.call(this, []);
-      };
-    };
-    module.exports = exports = {
-      apply: apply,
-      combine: combine,
-      watch: watch
-    };
+      }()
+    });
+    Object.merge(exports, { Control: require('/ui\\html\\Control.coffee', module) });
     if (typeof describe === 'function') {
       assert = require('assert', module);
-      describe('patch', function () {
-        it('rocks', function () {
-        });
-        return it('should work', function (done) {
-          var source, target, unwatch;
-          source = {
-            name: 'Kris',
-            age: 41,
-            children: {
-              Sadera: {
-                grandchildren: {
-                  One: 1,
-                  Two: 2
-                }
-              },
-              Orion: {}
-            }
-          };
-          target = Object.clone(source);
-          unwatch = watch(source, function (patch) {
-            target = apply(target, patch);
-            assert(Object.equal(source, target));
-            done();
-            return unwatch();
+      describe('glass.ui.html', function () {
+        if (null != global.window)
+          return describe('createElement', function () {
+            return it('creates with correct tag, attributes and children', function () {
+              var element;
+              element = exports.createElement('<div id="test">Test</div>');
+              assert.equal(element.tagName, 'DIV');
+              assert.equal(element.getAttribute('id'), 'test');
+              return assert.equal(element.innerHTML, 'Test');
+            });
           });
-          source.name = 'Fred';
-          source.children.Orion = {
-            a: 1,
-            b: 2
-          };
-          source.children.Orion.c = 12;
-          return source.children.Sadera.grandchildren.three = 3;
-        });
       });
     }
   });
@@ -2620,8 +2540,510 @@
       return Object.prototype.hasOwnProperty.call(obj, prop);
     }
   });
+  require.define('/ui\\html\\Control.coffee', function (module, exports, __dirname, __filename) {
+    var assert, Control, createElement, dispose, exports, initialize, isElement, isNode, UiControl;
+    UiControl = require('/ui\\Control.coffee', module);
+    cache$ = require('/ui\\html\\index.coffee', module);
+    isElement = cache$.isElement;
+    isNode = cache$.isNode;
+    createElement = cache$.createElement;
+    module.exports = exports = Control = UiControl.extend({
+      id: 'glass.ui.html.Control',
+      properties: {
+        initialize: initialize = function () {
+          var parentNode;
+          this.inner(initialize);
+          if (!isNode(this.element))
+            throw new Error('element property is required');
+          if (null != this.container)
+            this.container;
+          else
+            this.container = this.element;
+          parentNode = isElement(this.parent.container) ? this.parent.container : isElement(this.parent) ? this.parent : null != global.window ? global.window.document.body : void 0;
+          return parentNode.appendChild(this.element);
+        },
+        dispose: dispose = function () {
+          this.element.parentNode.removeChild(this.element);
+          return this.inner(dispose);
+        },
+        element: { description: 'The actual DOM node or element' },
+        container: { description: 'The element to add children to.  Usually same as this.element.' }
+      }
+    });
+    if (typeof describe === 'function') {
+      assert = require('assert', module);
+      describe('glass.ui.html.Control', function () {
+        if (global.window)
+          return it('should be able to add to window', function () {
+            var control;
+            control = new Control({
+              parent: global,
+              element: createElement('<span>Test</span>')
+            });
+            assert.equal(window.document.body, control.element.parentNode);
+            assert.equal(window.document.body.lastChild, control.element);
+            control.dispose();
+            return assert(!(null != control.element.parentNode));
+          });
+      });
+    }
+  });
+  require.define('/ui\\Control.coffee', function (module, exports, __dirname, __filename) {
+    var Control, draw, Element, exports;
+    Element = require('/ui\\Element.coffee', module);
+    module.exports = exports = Control = Element.extend({
+      id: 'glass.ui.Control',
+      properties: {
+        draw: draw = function (c) {
+          return this.inner(draw, c);
+        },
+        position: null,
+        size: null
+      }
+    });
+  });
+  require.define('/ui\\Element.coffee', function (module, exports, __dirname, __filename) {
+    var Component, draw, Element, exports;
+    Component = require('/Component.coffee', module);
+    module.exports = exports = Element = Component.extend({
+      id: 'glass.ui.Element',
+      properties: {
+        visible: true,
+        draw: draw = function (c) {
+          if (this.visible)
+            return this.inner(draw, c);
+        },
+        getBoundingRect: function () {
+        },
+        getBoundingSphere: function () {
+        },
+        getBoundingBox: function () {
+        },
+        pick: function (ray, radius) {
+        }
+      }
+    });
+  });
+  require.define('/Component.coffee', function (module, exports, __dirname, __filename) {
+    var assert, Component, dispose, extend, generateId, getBaseDefiningClass, getUnderrideName, glass_Component, initialize, isPrimitive, properties, underride;
+    require('/global.coffee', module);
+    generateId = function (parent, type) {
+      var count, counts, name;
+      name = type.name;
+      if (!(null != name))
+        throw new Error('type did not have a name: ' + type);
+      counts = null != parent._Component_generateId_counts ? parent._Component_generateId_counts : parent._Component_generateId_counts = {};
+      count = null != counts[name] ? counts[name] : counts[name] = 0;
+      count++;
+      counts[name] = count;
+      return '' + name + '_' + count;
+    };
+    module.exports = Component = glass_Component = function () {
+      function glass_Component(properties) {
+        this.initialize(properties);
+        this;
+      }
+      return glass_Component;
+    }();
+    isPrimitive = function (object) {
+      return Object.isNumber(object) || Object.isBoolean(object) || Object.isString(object);
+    };
+    Component.normalizeProperties = function (properties, definingClass) {
+      var name, property;
+      if (null == properties)
+        properties = {};
+      for (name in properties) {
+        property = properties[name];
+        if (Object.isFunction(property)) {
+          property = {
+            writable: false,
+            value: property
+          };
+        } else if (!(null != property) || isPrimitive(property) || Object.isArray(property)) {
+          property = { value: property };
+        }
+        if (!(null != property.get) && !(null != property.set) && !property.hasOwnProperty('value'))
+          property.value = null;
+        if (property.hasOwnProperty('value'))
+          if (null != property.writable)
+            property.writable;
+          else
+            property.writable = true;
+        if (Object.isFunction(property.value))
+          if (null != property.value.id)
+            property.value.id;
+          else
+            property.value.id = name;
+        if (null != definingClass) {
+          if (null != property.definingClass)
+            property.definingClass;
+          else
+            property.definingClass = definingClass;
+          if (Object.isFunction(property.value))
+            if (null != property.value.definingClass)
+              property.value.definingClass;
+            else
+              property.value.definingClass = definingClass;
+        }
+        properties[name] = property;
+      }
+      return properties;
+    };
+    Component.defineProperties = function (object, properties, definingClass) {
+      properties = Component.normalizeProperties(properties, definingClass);
+      Object.defineProperties(object, properties);
+      return properties;
+    };
+    Component.disposeProperties = function (object) {
+      var key, value;
+      for (key in object) {
+        value = object[key];
+        if ('undefined' !== typeof value && null != value && value.parent === object && Object.isFunction(value.dispose))
+          value.dispose();
+      }
+    };
+    Component.id = 'glass.Component';
+    Component.toString = function () {
+      return this.id;
+    };
+    Component.valueOf = function () {
+      return null != this.value ? this.value : this.id;
+    };
+    properties = {
+      id: {
+        get: function () {
+          return this._id;
+        },
+        set: function (value) {
+          if (null != this._id)
+            throw new Error('id has already been set to ' + this._id);
+          return this._id = value;
+        }
+      },
+      parent: {
+        get: function () {
+          return this._parent;
+        },
+        set: function (value) {
+          if (null != this._parent)
+            throw new Error('parent has already been set to ' + this._parent);
+          return this._parent = value;
+        }
+      },
+      inner: {
+        description: 'Calls the subclass defined function if present.',
+        value: function (fn, args) {
+          var innerName;
+          args = 2 <= arguments.length ? [].slice.call(arguments, 1) : [];
+          innerName = null != fn.innerName ? fn.innerName : fn.innerName = getUnderrideName(fn.definingClass, fn.id);
+          if (null != this[innerName])
+            return this[innerName].apply(this, args);
+        }
+      },
+      initialize: initialize = function (properties) {
+        var id, key, parent, value;
+        if (!(null != properties))
+          throw new Error('properties object is required ' + properties);
+        if (!(null != properties.parent))
+          throw new Error('parent is required');
+        parent = properties.parent;
+        id = null != properties.id ? properties.id : properties.id = generateId(parent, this.constructor);
+        parent[id] = this;
+        for (key in properties) {
+          value = properties[key];
+          this[key] = value;
+        }
+        return this.inner(initialize);
+      },
+      dispose: dispose = function () {
+        if (null != this._parent) {
+          Component.disposeProperties(this);
+          if (this._parent === global) {
+            delete this._parent[this.id];
+          } else {
+            this._parent[this.id] = null;
+          }
+          this._parent = null;
+          this.inner(dispose);
+        }
+      },
+      disposed: {
+        get: function () {
+          return this._parent === null;
+        }
+      },
+      get: function (id, parsed) {
+        var colon, factory, isClass, throwError, type, value;
+        if (!(null != id))
+          throw new Error('id is required');
+        value = this[id];
+        if (null != value)
+          if (value.disposed === true) {
+            value = null;
+          } else {
+            return value;
+          }
+        throwError = !(null != parsed);
+        if (!(null != parsed)) {
+          colon = id.indexOf(':');
+          if (colon > 0) {
+            parsed = {
+              type: id.substring(0, colon),
+              properties: JSON.parse(id.substring(colon + 1))
+            };
+          } else {
+            parsed = false;
+          }
+        }
+        if (parsed) {
+          type = parsed.type;
+          properties = parsed.properties;
+          factory = this[type];
+          if (Object.isFunction(factory)) {
+            properties.parent = this;
+            isClass = null != factory.properties;
+            if (isClass) {
+              value = new factory(properties);
+            } else {
+              value = factory(properties);
+            }
+          }
+        }
+        if (null != value)
+          value;
+        else
+          value = 'function' === typeof this.parent.get ? this.parent.get(id, parsed) : void 0;
+        if (null != value) {
+          this[id] = value;
+        } else if (throwError) {
+          throw new Error('Component not found: ' + id);
+        }
+        return value;
+      }
+    };
+    Component.properties = Component.defineProperties(Component.prototype, properties, Component);
+    getUnderrideName = function (baseDefiningClass, name) {
+      return '' + baseDefiningClass.name + '_subclass_' + name;
+    };
+    getBaseDefiningClass = function (classDefinition, properties, name) {
+      var baseDefiningClass, baseFunction, baseProperty, callsUnderride, underrideName, underrideProperty;
+      baseProperty = properties[name];
+      while (true) {
+        baseFunction = baseProperty.value;
+        baseDefiningClass = baseProperty.definingClass;
+        underrideName = getUnderrideName(baseDefiningClass, name);
+        callsUnderride = baseFunction.toString().has(underrideName) || baseFunction.toString().has(/\binner\b/);
+        if (!callsUnderride)
+          throw new Error('' + classDefinition.name + '.' + name + ' cannot be defined because ' + baseDefiningClass.name + '.' + name + ' does not call ' + underrideName + '.');
+        underrideProperty = properties[underrideName];
+        if (null != underrideProperty) {
+          baseProperty = underrideProperty;
+        } else {
+          return baseDefiningClass;
+        }
+      }
+    };
+    underride = function (classDefinition, properties, rootDefiningClass, name, fn) {
+      var baseDefiningClass;
+      baseDefiningClass = getBaseDefiningClass(classDefinition, properties, name);
+      properties[getUnderrideName(baseDefiningClass, name)] = fn;
+    };
+    extend = function (baseClass, subClassDefinition) {
+      var baseProperty, name, property, prototype, subClass, subProperties;
+      if (!Object.isString(null != subClassDefinition ? subClassDefinition.id : void 0))
+        throw new Error('missing id property');
+      subClassDefinition.name = subClassDefinition.id.replace(/[\.\/]/g, '_');
+      subClass = eval('\r\n(function ' + subClassDefinition.name + '(properties) {\r\n    this.initialize(properties);\r\n})');
+      subProperties = subClassDefinition.properties = Component.normalizeProperties(subClassDefinition.properties, subClass);
+      prototype = subClass.prototype;
+      properties = Object.clone(baseClass.properties);
+      for (name in subProperties) {
+        property = subProperties[name];
+        baseProperty = properties[name];
+        if (Object.isFunction(null != baseProperty ? baseProperty.value : void 0)) {
+          if (!Object.isFunction(property.value))
+            throw new Error('Functions can only be overridden with other functions: ' + property.value);
+          underride(subClassDefinition, properties, baseProperty.definingClass, name, property.value);
+        } else {
+          properties[name] = property;
+        }
+      }
+      subClassDefinition.properties = properties;
+      Object.merge(subClass, subClassDefinition);
+      Component.defineProperties(prototype, properties, subClass);
+      subClass.extend = function (subClassDefinition) {
+        return extend(subClass, subClassDefinition);
+      };
+      return subClass;
+    };
+    Component.extend = function (subClassDefinition) {
+      return extend(Component, subClassDefinition);
+    };
+    if (typeof describe === 'function') {
+      assert = require('assert', module);
+      describe('glass.Component', function () {
+        it('should have an id', function () {
+          return assert(Object.isString(Component.id));
+        });
+        it("its toString should return it's id", function () {
+          return assert.equal(Component.toString(), 'glass.Component');
+        });
+        it('should have a name', function () {
+          return assert.equal(Component.name, 'glass_Component');
+        });
+        describe('#dispose', function () {
+          it('should mark self disposed', function () {
+            var a;
+            a = new Component({ parent: global });
+            a.dispose();
+            return assert(a.disposed);
+          });
+          it('should dispose of children', function () {
+            var a, b;
+            a = new Component({ parent: global });
+            b = new Component({ parent: a });
+            a.dispose();
+            return assert(b.disposed);
+          });
+          return it('should remove property from parent', function () {
+            var a;
+            a = new Component({ parent: global });
+            a.dispose();
+            return assert(!(null != global[a.id]));
+          });
+        });
+        describe('#defineProperties', function () {
+          return it('should allow primitive values', function () {
+            var object;
+            object = {};
+            Component.defineProperties(object, {
+              f: function () {
+                return 'function';
+              },
+              i: 2,
+              b: true,
+              a: [],
+              s: 'hello'
+            });
+            assert(Object.isFunction(object.f));
+            assert.equal(object.f(), 'function');
+            assert.equal(object.i, 2);
+            assert.equal(object.b, true);
+            assert(Object.equal(object.a, []));
+            return assert.equal(object.s, 'hello');
+          });
+        });
+        describe('#Constructor', function () {
+          it('should set itself as property on parent', function () {
+            var a;
+            a = new Component({ parent: global });
+            assert(Object.isString(a.id));
+            assert.equal(global[a.id], a);
+            return a.dispose();
+          });
+          it('should require parent', function () {
+            return assert.throws(function () {
+              var a;
+              return a = new Component;
+            });
+          });
+          return it('should generate a missing id', function () {
+            var a;
+            a = new Component({ parent: global });
+            assert(Object.isString(a.id));
+            return a.dispose();
+          });
+        });
+        describe('#get', function () {
+          it('should throw exception if instance not found', function () {
+            var a;
+            a = new Component({ parent: global });
+            assert.throws(function () {
+              return a.get('foo');
+            });
+            return a.dispose();
+          });
+          return it('should create instances with factory', function () {
+            var a, b, c;
+            a = new Component({ parent: global });
+            b = new Component({ parent: a });
+            a[Component] = Component;
+            c = b.get('glass.Component:{"x":2,"y":3}');
+            assert.equal(c.x, 2);
+            assert.equal(c.y, 3);
+            assert.equal(c.parent, a);
+            return a.dispose();
+          });
+        });
+        return describe('extend', function () {
+          it('should inherit base properties', function () {
+            var SubComponent;
+            SubComponent = Component.extend({ id: 'SubComponent' });
+            return assert(null != SubComponent.properties.id);
+          });
+          it('should allow underriding constructors and functions', function () {
+            var sub, SubComponent;
+            SubComponent = Component.extend({
+              id: 'SubComponent',
+              properties: {
+                initialize: function () {
+                  this.constructorCalled = true;
+                  return this;
+                },
+                dispose: function () {
+                  this.disposeCalled = true;
+                }
+              }
+            });
+            sub = new SubComponent({ parent: global });
+            assert(sub.constructorCalled);
+            sub.dispose();
+            assert(sub.disposed);
+            return assert(sub.disposeCalled);
+          });
+          it('should allow recursive extension', function () {
+            var AComponent, BComponent;
+            AComponent = Component.extend({
+              id: 'AComponent',
+              properties: {
+                dispose: function () {
+                }
+              }
+            });
+            return BComponent = AComponent.extend({
+              id: 'BComponent',
+              properties: {
+                foo: function () {
+                }
+              }
+            });
+          });
+          return it('should not allow final functions to be underridden', function () {
+            var AComponent;
+            AComponent = Component.extend({
+              id: 'AComponent',
+              properties: {
+                dispose: function () {
+                }
+              }
+            });
+            return assert.throws(function () {
+              var BComponent;
+              return BComponent = AComponent.extend({
+                id: 'BComponent',
+                properties: {
+                  dispose: function () {
+                  }
+                }
+              });
+            });
+          });
+        });
+      });
+    }
+  });
   require.define('/global.coffee', function (module, exports, __dirname, __filename) {
-    var global;
+    var exports, global;
     require('/..\\node_modules\\sugar\\release\\sugar-full.development.js', module);
     global = function () {
       return this;
@@ -2630,6 +3052,7 @@
       global.global;
     else
       global.global = global;
+    module.exports = exports = global;
   });
   require.define('/..\\node_modules\\sugar\\release\\sugar-full.development.js', function (module, exports, __dirname, __filename) {
     (function () {
@@ -7655,6 +8078,323 @@
       });
     }());
   });
+  require.define('/ui\\Color.coffee', function (module, exports, __dirname, __filename) {
+    var assert, Color, exports;
+    module.exports = exports = Color = function (r, g, b, a) {
+      if (null == a)
+        a = 1;
+      return new Float32Array([
+        r,
+        g,
+        b,
+        a
+      ]);
+    };
+    Color.toRgbaString = function (color) {
+      var convert;
+      if (!(null != color))
+        return null;
+      convert = function (index) {
+        return Math.round(color[index] * 255);
+      };
+      return 'rgba(' + convert(0) + ',' + convert(1) + ',' + convert(2) + ',' + color[3] + ')';
+    };
+    Color.aliceblue = Color(240 / 255, 248 / 255, 255 / 255);
+    Color.antiquewhite = Color(250 / 255, 235 / 255, 215 / 255);
+    Color.aqua = Color(0 / 255, 255 / 255, 255 / 255);
+    Color.aquamarine = Color(127 / 255, 255 / 255, 212 / 255);
+    Color.azure = Color(240 / 255, 255 / 255, 255 / 255);
+    Color.beige = Color(245 / 255, 245 / 255, 220 / 255);
+    Color.bisque = Color(255 / 255, 228 / 255, 196 / 255);
+    Color.black = Color(0 / 255, 0 / 255, 0 / 255);
+    Color.blanchedalmond = Color(255 / 255, 235 / 255, 205 / 255);
+    Color.blue = Color(0 / 255, 0 / 255, 255 / 255);
+    Color.blueviolet = Color(138 / 255, 43 / 255, 226 / 255);
+    Color.brown = Color(165 / 255, 42 / 255, 42 / 255);
+    Color.burlywood = Color(222 / 255, 184 / 255, 135 / 255);
+    Color.cadetblue = Color(95 / 255, 158 / 255, 160 / 255);
+    Color.chartreuse = Color(127 / 255, 255 / 255, 0 / 255);
+    Color.chocolate = Color(210 / 255, 105 / 255, 30 / 255);
+    Color.coral = Color(255 / 255, 127 / 255, 80 / 255);
+    Color.cornflowerblue = Color(100 / 255, 149 / 255, 237 / 255);
+    Color.cornsilk = Color(255 / 255, 248 / 255, 220 / 255);
+    Color.crimson = Color(220 / 255, 20 / 255, 60 / 255);
+    Color.cyan = Color(0 / 255, 255 / 255, 255 / 255);
+    Color.darkblue = Color(0 / 255, 0 / 255, 139 / 255);
+    Color.darkcyan = Color(0 / 255, 139 / 255, 139 / 255);
+    Color.darkgoldenrod = Color(184 / 255, 134 / 255, 11 / 255);
+    Color.darkgray = Color(169 / 255, 169 / 255, 169 / 255);
+    Color.darkgreen = Color(0 / 255, 100 / 255, 0 / 255);
+    Color.darkgrey = Color(169 / 255, 169 / 255, 169 / 255);
+    Color.darkkhaki = Color(189 / 255, 183 / 255, 107 / 255);
+    Color.darkmagenta = Color(139 / 255, 0 / 255, 139 / 255);
+    Color.darkolivegreen = Color(85 / 255, 107 / 255, 47 / 255);
+    Color.darkorange = Color(255 / 255, 140 / 255, 0 / 255);
+    Color.darkorchid = Color(153 / 255, 50 / 255, 204 / 255);
+    Color.darkred = Color(139 / 255, 0 / 255, 0 / 255);
+    Color.darksalmon = Color(233 / 255, 150 / 255, 122 / 255);
+    Color.darkseagreen = Color(143 / 255, 188 / 255, 143 / 255);
+    Color.darkslateblue = Color(72 / 255, 61 / 255, 139 / 255);
+    Color.darkslategray = Color(47 / 255, 79 / 255, 79 / 255);
+    Color.darkslategrey = Color(47 / 255, 79 / 255, 79 / 255);
+    Color.darkturquoise = Color(0 / 255, 206 / 255, 209 / 255);
+    Color.darkviolet = Color(148 / 255, 0 / 255, 211 / 255);
+    Color.deeppink = Color(255 / 255, 20 / 255, 147 / 255);
+    Color.deepskyblue = Color(0 / 255, 191 / 255, 255 / 255);
+    Color.dimgray = Color(105 / 255, 105 / 255, 105 / 255);
+    Color.dimgrey = Color(105 / 255, 105 / 255, 105 / 255);
+    Color.dodgerblue = Color(30 / 255, 144 / 255, 255 / 255);
+    Color.firebrick = Color(178 / 255, 34 / 255, 34 / 255);
+    Color.floralwhite = Color(255 / 255, 250 / 255, 240 / 255);
+    Color.forestgreen = Color(34 / 255, 139 / 255, 34 / 255);
+    Color.fuchsia = Color(255 / 255, 0 / 255, 255 / 255);
+    Color.gainsboro = Color(220 / 255, 220 / 255, 220 / 255);
+    Color.ghostwhite = Color(248 / 255, 248 / 255, 255 / 255);
+    Color.gold = Color(255 / 255, 215 / 255, 0 / 255);
+    Color.goldenrod = Color(218 / 255, 165 / 255, 32 / 255);
+    Color.gray = Color(128 / 255, 128 / 255, 128 / 255);
+    Color.green = Color(0 / 255, 128 / 255, 0 / 255);
+    Color.greenyellow = Color(173 / 255, 255 / 255, 47 / 255);
+    Color.grey = Color(128 / 255, 128 / 255, 128 / 255);
+    Color.honeydew = Color(240 / 255, 255 / 255, 240 / 255);
+    Color.hotpink = Color(255 / 255, 105 / 255, 180 / 255);
+    Color.indianred = Color(205 / 255, 92 / 255, 92 / 255);
+    Color.indigo = Color(75 / 255, 0 / 255, 130 / 255);
+    Color.ivory = Color(255 / 255, 255 / 255, 240 / 255);
+    Color.khaki = Color(240 / 255, 230 / 255, 140 / 255);
+    Color.lavender = Color(230 / 255, 230 / 255, 250 / 255);
+    Color.lavenderblush = Color(255 / 255, 240 / 255, 245 / 255);
+    Color.lawngreen = Color(124 / 255, 252 / 255, 0 / 255);
+    Color.lemonchiffon = Color(255 / 255, 250 / 255, 205 / 255);
+    Color.lightblue = Color(173 / 255, 216 / 255, 230 / 255);
+    Color.lightcoral = Color(240 / 255, 128 / 255, 128 / 255);
+    Color.lightcyan = Color(224 / 255, 255 / 255, 255 / 255);
+    Color.lightgoldenrodyellow = Color(250 / 255, 250 / 255, 210 / 255);
+    Color.lightgray = Color(211 / 255, 211 / 255, 211 / 255);
+    Color.lightgreen = Color(144 / 255, 238 / 255, 144 / 255);
+    Color.lightgrey = Color(211 / 255, 211 / 255, 211 / 255);
+    Color.lightpink = Color(255 / 255, 182 / 255, 193 / 255);
+    Color.lightsalmon = Color(255 / 255, 160 / 255, 122 / 255);
+    Color.lightseagreen = Color(32 / 255, 178 / 255, 170 / 255);
+    Color.lightskyblue = Color(135 / 255, 206 / 255, 250 / 255);
+    Color.lightslategray = Color(119 / 255, 136 / 255, 153 / 255);
+    Color.lightslategrey = Color(119 / 255, 136 / 255, 153 / 255);
+    Color.lightsteelblue = Color(176 / 255, 196 / 255, 222 / 255);
+    Color.lightyellow = Color(255 / 255, 255 / 255, 224 / 255);
+    Color.lime = Color(0 / 255, 255 / 255, 0 / 255);
+    Color.limegreen = Color(50 / 255, 205 / 255, 50 / 255);
+    Color.linen = Color(250 / 255, 240 / 255, 230 / 255);
+    Color.magenta = Color(255 / 255, 0 / 255, 255 / 255);
+    Color.maroon = Color(128 / 255, 0 / 255, 0 / 255);
+    Color.mediumaquamarine = Color(102 / 255, 205 / 255, 170 / 255);
+    Color.mediumblue = Color(0 / 255, 0 / 255, 205 / 255);
+    Color.mediumorchid = Color(186 / 255, 85 / 255, 211 / 255);
+    Color.mediumpurple = Color(147 / 255, 112 / 255, 219 / 255);
+    Color.mediumseagreen = Color(60 / 255, 179 / 255, 113 / 255);
+    Color.mediumslateblue = Color(123 / 255, 104 / 255, 238 / 255);
+    Color.mediumspringgreen = Color(0 / 255, 250 / 255, 154 / 255);
+    Color.mediumturquoise = Color(72 / 255, 209 / 255, 204 / 255);
+    Color.mediumvioletred = Color(199 / 255, 21 / 255, 133 / 255);
+    Color.midnightblue = Color(25 / 255, 25 / 255, 112 / 255);
+    Color.mintcream = Color(245 / 255, 255 / 255, 250 / 255);
+    Color.mistyrose = Color(255 / 255, 228 / 255, 225 / 255);
+    Color.moccasin = Color(255 / 255, 228 / 255, 181 / 255);
+    Color.navajowhite = Color(255 / 255, 222 / 255, 173 / 255);
+    Color.navy = Color(0 / 255, 0 / 255, 128 / 255);
+    Color.oldlace = Color(253 / 255, 245 / 255, 230 / 255);
+    Color.olive = Color(128 / 255, 128 / 255, 0 / 255);
+    Color.olivedrab = Color(107 / 255, 142 / 255, 35 / 255);
+    Color.orange = Color(255 / 255, 165 / 255, 0 / 255);
+    Color.orangered = Color(255 / 255, 69 / 255, 0 / 255);
+    Color.orchid = Color(218 / 255, 112 / 255, 214 / 255);
+    Color.palegoldenrod = Color(238 / 255, 232 / 255, 170 / 255);
+    Color.palegreen = Color(152 / 255, 251 / 255, 152 / 255);
+    Color.paleturquoise = Color(175 / 255, 238 / 255, 238 / 255);
+    Color.palevioletred = Color(219 / 255, 112 / 255, 147 / 255);
+    Color.papayawhip = Color(255 / 255, 239 / 255, 213 / 255);
+    Color.peachpuff = Color(255 / 255, 218 / 255, 185 / 255);
+    Color.peru = Color(205 / 255, 133 / 255, 63 / 255);
+    Color.pink = Color(255 / 255, 192 / 255, 203 / 255);
+    Color.plum = Color(221 / 255, 160 / 255, 221 / 255);
+    Color.powderblue = Color(176 / 255, 224 / 255, 230 / 255);
+    Color.purple = Color(128 / 255, 0 / 255, 128 / 255);
+    Color.red = Color(255 / 255, 0 / 255, 0 / 255);
+    Color.rosybrown = Color(188 / 255, 143 / 255, 143 / 255);
+    Color.royalblue = Color(65 / 255, 105 / 255, 225 / 255);
+    Color.saddlebrown = Color(139 / 255, 69 / 255, 19 / 255);
+    Color.salmon = Color(250 / 255, 128 / 255, 114 / 255);
+    Color.sandybrown = Color(244 / 255, 164 / 255, 96 / 255);
+    Color.seagreen = Color(46 / 255, 139 / 255, 87 / 255);
+    Color.seashell = Color(255 / 255, 245 / 255, 238 / 255);
+    Color.sienna = Color(160 / 255, 82 / 255, 45 / 255);
+    Color.silver = Color(192 / 255, 192 / 255, 192 / 255);
+    Color.skyblue = Color(135 / 255, 206 / 255, 235 / 255);
+    Color.slateblue = Color(106 / 255, 90 / 255, 205 / 255);
+    Color.slategray = Color(112 / 255, 128 / 255, 144 / 255);
+    Color.slategrey = Color(112 / 255, 128 / 255, 144 / 255);
+    Color.snow = Color(255 / 255, 250 / 255, 250 / 255);
+    Color.springgreen = Color(0 / 255, 255 / 255, 127 / 255);
+    Color.steelblue = Color(70 / 255, 130 / 255, 180 / 255);
+    Color.tan = Color(210 / 255, 180 / 255, 140 / 255);
+    Color.teal = Color(0 / 255, 128 / 255, 128 / 255);
+    Color.thistle = Color(216 / 255, 191 / 255, 216 / 255);
+    Color.tomato = Color(255 / 255, 99 / 255, 71 / 255);
+    Color.turquoise = Color(64 / 255, 224 / 255, 208 / 255);
+    Color.violet = Color(238 / 255, 130 / 255, 238 / 255);
+    Color.wheat = Color(245 / 255, 222 / 255, 179 / 255);
+    Color.white = Color(255 / 255, 255 / 255, 255 / 255);
+    Color.whitesmoke = Color(245 / 255, 245 / 255, 245 / 255);
+    Color.yellow = Color(255 / 255, 255 / 255, 0 / 255);
+    Color.yellowgreen = Color(154 / 255, 205 / 255, 50 / 255);
+    if (typeof describe === 'function') {
+      assert = require('assert', module);
+      describe('glass.ui.Color', function () {
+        return it('toRgbaString(Color.white) should yield rgba(255,255,255,1)', function () {
+          return assert.equal(Color.toRgbaString(Color.white), 'rgba(255,255,255,1)');
+        });
+      });
+    }
+  });
+  require.define('/patch.coffee', function (module, exports, __dirname, __filename) {
+    var apply, assert, canWatch, combine, exports, watch;
+    require('/global.coffee', module);
+    apply = function (target, values, deleteUndefined) {
+      var key, patchedValue, value;
+      if (null == deleteUndefined)
+        deleteUndefined = true;
+      if (!((null != values ? values.constructor : void 0) === Object))
+        return Object.clone(values, true);
+      if ((null != target ? target.constructor : void 0) !== Object)
+        target = {};
+      for (key in values) {
+        value = values[key];
+        patchedValue = apply(target[key], value, deleteUndefined);
+        if (value === void 0 && deleteUndefined) {
+          delete target[key];
+        } else {
+          target[key] = patchedValue;
+        }
+      }
+      return target;
+    };
+    combine = function (patch1, patch2) {
+      return apply(patch1, patch2, false);
+    };
+    canWatch = function (object) {
+      return null != object && typeof object === 'object';
+    };
+    watch = function (object, handler, callInitial) {
+      var pendingPatch, processPatch, subWatchers, watcher;
+      if (null == callInitial)
+        callInitial = true;
+      if (!canWatch(object))
+        throw new Error('Cannot watch: ' + object);
+      subWatchers = {};
+      pendingPatch = null;
+      processPatch = function (patchValues) {
+        var name, value;
+        for (name in patchValues) {
+          if ('function' === typeof subWatchers[name])
+            subWatchers[name]();
+          value = object[name];
+          if (canWatch(value))
+            (function () {
+              var saveName, subHandler;
+              saveName = name;
+              subHandler = function (patch) {
+                var basePatch;
+                basePatch = {};
+                basePatch[saveName] = patch;
+                if (null != pendingPatch) {
+                  return pendingPatch = combine(pendingPatch, basePatch);
+                } else {
+                  return handler(basePatch);
+                }
+              };
+              return subWatchers[saveName] = watch(value, subHandler, false);
+            }());
+        }
+      };
+      watcher = function (changes) {
+        var change;
+        pendingPatch = {};
+        for (var i$ = 0, length$ = changes.length; i$ < length$; ++i$) {
+          change = changes[i$];
+          pendingPatch[change.name] = object[change.name];
+        }
+        processPatch(pendingPatch);
+        return process.nextTick(function () {
+          handler(pendingPatch);
+          return pendingPatch = null;
+        });
+      };
+      processPatch(object);
+      Object.observe(object, watcher);
+      return function () {
+        Object.unobserve(object, watcher);
+        return function (accum$) {
+          var key, value;
+          for (key in subWatchers) {
+            value = subWatchers[key];
+            accum$.push(value());
+          }
+          return accum$;
+        }.call(this, []);
+      };
+    };
+    module.exports = exports = {
+      apply: apply,
+      combine: combine,
+      watch: watch
+    };
+    if (typeof describe === 'function') {
+      assert = require('assert', module);
+      describe('glass.patch', function () {
+        return it('should work', function (done) {
+          var source, target, unwatch;
+          source = {
+            name: 'Kris',
+            age: 41,
+            children: {
+              Sadera: {
+                grandchildren: {
+                  One: 1,
+                  Two: 2
+                }
+              },
+              Orion: {}
+            }
+          };
+          target = Object.clone(source);
+          unwatch = watch(source, function (patch) {
+            target = apply(target, patch);
+            assert(Object.equal(source, target));
+            done();
+            return unwatch();
+          });
+          source.name = 'Fred';
+          source.children.Orion = {
+            a: 1,
+            b: 2
+          };
+          source.children.Orion.c = 12;
+          return source.children.Sadera.grandchildren.three = 3;
+        });
+      });
+    }
+  });
+  require.define('/global.coffee', function (module, exports, __dirname, __filename) {
+    var exports, global;
+    require('/..\\node_modules\\sugar\\release\\sugar-full.development.js', module);
+    global = function () {
+      return this;
+    }();
+    if (null != global.global)
+      global.global;
+    else
+      global.global = global;
+    module.exports = exports = global;
+  });
   require.define('/Enum.coffee', function (module, exports, __dirname, __filename) {
     var Enum;
     module.exports = Enum = function () {
@@ -7672,7 +8412,7 @@
     }();
   });
   require.define('/Component.coffee', function (module, exports, __dirname, __filename) {
-    var assert, Component, extend, generateId, getBaseDefiningClass, getUnderrideName, glass_Component, isPrimitive, properties, underride;
+    var assert, Component, dispose, extend, generateId, getBaseDefiningClass, getUnderrideName, glass_Component, initialize, isPrimitive, properties, underride;
     require('/global.coffee', module);
     generateId = function (parent, type) {
       var count, counts, name;
@@ -7706,17 +8446,32 @@
             writable: false,
             value: property
           };
-        } else if (isPrimitive(property) || Object.isArray(property)) {
-          property = {
-            writable: true,
-            value: property
-          };
+        } else if (!(null != property) || isPrimitive(property) || Object.isArray(property)) {
+          property = { value: property };
         }
-        if (null != definingClass)
+        if (!(null != property.get) && !(null != property.set) && !property.hasOwnProperty('value'))
+          property.value = null;
+        if (property.hasOwnProperty('value'))
+          if (null != property.writable)
+            property.writable;
+          else
+            property.writable = true;
+        if (Object.isFunction(property.value))
+          if (null != property.value.id)
+            property.value.id;
+          else
+            property.value.id = name;
+        if (null != definingClass) {
           if (null != property.definingClass)
             property.definingClass;
           else
             property.definingClass = definingClass;
+          if (Object.isFunction(property.value))
+            if (null != property.value.definingClass)
+              property.value.definingClass;
+            else
+              property.value.definingClass = definingClass;
+        }
         properties[name] = property;
       }
       return properties;
@@ -7762,21 +8517,32 @@
           return this._parent = value;
         }
       },
-      initialize: function (properties) {
-        var id, parent;
+      inner: {
+        description: 'Calls the subclass defined function if present.',
+        value: function (fn, args) {
+          var innerName;
+          args = 2 <= arguments.length ? [].slice.call(arguments, 1) : [];
+          innerName = null != fn.innerName ? fn.innerName : fn.innerName = getUnderrideName(fn.definingClass, fn.id);
+          if (null != this[innerName])
+            return this[innerName].apply(this, args);
+        }
+      },
+      initialize: initialize = function (properties) {
+        var id, key, parent, value;
         if (!(null != properties))
           throw new Error('properties object is required ' + properties);
         if (!(null != properties.parent))
           throw new Error('parent is required');
         parent = properties.parent;
         id = null != properties.id ? properties.id : properties.id = generateId(parent, this.constructor);
-        if (null != properties)
-          Object.merge(this, properties);
         parent[id] = this;
-        if (null != this.glass_Component_subclass_initialize)
-          return this.glass_Component_subclass_initialize.call(this);
+        for (key in properties) {
+          value = properties[key];
+          this[key] = value;
+        }
+        return this.inner(initialize);
       },
-      dispose: function () {
+      dispose: dispose = function () {
         if (null != this._parent) {
           Component.disposeProperties(this);
           if (this._parent === global) {
@@ -7785,8 +8551,7 @@
             this._parent[this.id] = null;
           }
           this._parent = null;
-          if (null != this.glass_Component_subclass_dispose)
-            this.glass_Component_subclass_dispose.call(this);
+          this.inner(dispose);
         }
       },
       disposed: {
@@ -7854,7 +8619,7 @@
         baseFunction = baseProperty.value;
         baseDefiningClass = baseProperty.definingClass;
         underrideName = getUnderrideName(baseDefiningClass, name);
-        callsUnderride = baseFunction.toString().has(underrideName);
+        callsUnderride = baseFunction.toString().has(underrideName) || baseFunction.toString().has(/\binner\b/);
         if (!callsUnderride)
           throw new Error('' + classDefinition.name + '.' + name + ' cannot be defined because ' + baseDefiningClass.name + '.' + name + ' does not call ' + underrideName + '.');
         underrideProperty = properties[underrideName];
@@ -7874,7 +8639,7 @@
       var baseProperty, name, property, prototype, subClass, subProperties;
       if (!Object.isString(null != subClassDefinition ? subClassDefinition.id : void 0))
         throw new Error('missing id property');
-      subClassDefinition.name = subClassDefinition.id.split('/').pop();
+      subClassDefinition.name = subClassDefinition.id.replace(/[\.\/]/g, '_');
       subClass = eval('\r\n(function ' + subClassDefinition.name + '(properties) {\r\n    this.initialize(properties);\r\n})');
       subProperties = subClassDefinition.properties = Component.normalizeProperties(subClassDefinition.properties, subClass);
       prototype = subClass.prototype;
@@ -7890,7 +8655,7 @@
           properties[name] = property;
         }
       }
-      subClass.properties = properties;
+      subClassDefinition.properties = properties;
       Object.merge(subClass, subClassDefinition);
       Component.defineProperties(prototype, properties, subClass);
       subClass.extend = function (subClassDefinition) {
@@ -7903,7 +8668,7 @@
     };
     if (typeof describe === 'function') {
       assert = require('assert', module);
-      describe('Component', function () {
+      describe('glass.Component', function () {
         it('should have an id', function () {
           return assert(Object.isString(Component.id));
         });
@@ -7998,6 +8763,11 @@
           });
         });
         return describe('extend', function () {
+          it('should inherit base properties', function () {
+            var SubComponent;
+            SubComponent = Component.extend({ id: 'SubComponent' });
+            return assert(null != SubComponent.properties.id);
+          });
           it('should allow underriding constructors and functions', function () {
             var sub, SubComponent;
             SubComponent = Component.extend({

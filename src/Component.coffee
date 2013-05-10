@@ -23,13 +23,25 @@ Component.normalizeProperties = (properties={}, definingClass) ->
             property =
                 writable: false
                 value: property
-        else if isPrimitive(property) or Object.isArray(property)
+        else if not property? or isPrimitive(property) or Object.isArray(property)
             property =
-                writable: true
                 value: property
+
+        if not property.get? and not property.set? and not property.hasOwnProperty('value')
+            property.value = null
+
+        if property.hasOwnProperty 'value'
+            # default property values to writable
+            property.writable ?= true
+
+        # set the id of functions to their property name
+        if Object.isFunction property.value
+            property.value.id ?= name
 
         if definingClass?
             property.definingClass ?= definingClass
+            if Object.isFunction property.value
+                property.value.definingClass ?= definingClass
         properties[name] = property
     properties
 
@@ -60,16 +72,26 @@ properties =
         set: (value) ->
             throw new Error "parent has already been set to #{@_parent}" if @_parent?
             @_parent = value
+    inner:
+        description: "Calls the subclass defined function if present."
+        value: (fn, args...)->
+            # get and cache the name of the underride function
+            innerName = fn.innerName ?= getUnderrideName fn.definingClass, fn.id
+            @[innerName]?.apply @, args
     # lifecycle
-    initialize: (properties) ->
+    initialize: initialize = (properties) ->
         throw new Error "properties object is required #{properties}" unless properties?
         throw new Error "parent is required" unless properties.parent?
+        # first set ourselves onto parent
         parent = properties.parent
         id = properties.id ?= generateId parent, @constructor
-        Object.merge @, properties if properties?
         parent[id] = @
-        @glass_Component_subclass_initialize?.call @
-    dispose: ->
+        # second we set all properties in case setters access parent
+        for key, value of properties
+            @[key] = value
+        # finally we call subclass initializer
+        @inner initialize
+    dispose: dispose = ->
         if @_parent?
             Component.disposeProperties @
             if @_parent is global
@@ -77,7 +99,7 @@ properties =
             else
                 @_parent[@id] = null
             @_parent = null
-            @glass_Component_subclass_dispose?.call @
+            @inner dispose
         return
     disposed:
         get: -> @_parent is null
@@ -139,7 +161,9 @@ getBaseDefiningClass = (classDefinition, properties, name) ->
         baseDefiningClass = baseProperty.definingClass
         # search the text for a call to the underride function
         underrideName = getUnderrideName baseDefiningClass, name
-        callsUnderride = baseFunction.toString().has underrideName
+        callsUnderride =
+            baseFunction.toString().has(underrideName) or
+            baseFunction.toString().has(/\binner\b/)
         if not callsUnderride
             throw new Error "#{classDefinition.name}.#{name} cannot be defined because #{baseDefiningClass.name}.#{name} does not call #{underrideName}."
         # now check to see if it has already been underridden
@@ -158,7 +182,7 @@ underride = (classDefinition, properties, rootDefiningClass, name, fn) ->
 extend = (baseClass, subClassDefinition) ->
     throw new Error "missing id property" unless Object.isString subClassDefinition?.id
 
-    subClassDefinition.name = subClassDefinition.id.split('/').pop()
+    subClassDefinition.name = subClassDefinition.id.replace /[\.\/]/g, '_'
 
     subClass = eval """
         (function #{subClassDefinition.name}(properties) {
@@ -180,10 +204,8 @@ extend = (baseClass, subClassDefinition) ->
             underride subClassDefinition, properties, baseProperty.definingClass, name, property.value
         else
             properties[name] = property
-        # consider how to merge based upon baseProperty
-        # remember... functions cannot be overriden
 
-    subClass.properties = properties
+    subClassDefinition.properties = properties
     Object.merge subClass, subClassDefinition
 
     Component.defineProperties prototype, properties, subClass
@@ -196,7 +218,7 @@ Component.extend = (subClassDefinition) ->
 
 if typeof describe is 'function'
     assert = require 'assert'
-    describe 'Component', ->
+    describe 'glass.Component', ->
         it "should have an id", ->
             assert Object.isString Component.id
         it "its toString should return it's id", ->
@@ -260,6 +282,10 @@ if typeof describe is 'function'
                 assert.equal c.parent, a
                 a.dispose()
         describe 'extend', ->
+            it 'should inherit base properties', ->
+                SubComponent = Component.extend
+                    id: 'SubComponent'
+                assert SubComponent.properties.id?
             it 'should allow underriding constructors and functions', ->
                 SubComponent = Component.extend
                     id: 'SubComponent'

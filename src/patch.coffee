@@ -69,8 +69,7 @@ module.exports = exports =
 
 if typeof describe is 'function'
     assert = require 'assert'
-    describe 'patch', ->
-        it 'rocks', ->
+    describe 'glass.patch', ->
         it 'should work', (done) ->
             source =
                 name: 'Kris'

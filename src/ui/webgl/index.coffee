@@ -1,7 +1,5 @@
 Enum = require '../../Enum'
 
-module.exports = exports = {}
-
 # re-export all the gl-matrix properties
 Object.merge exports, require 'gl-matrix'
 

@@ -123,7 +123,7 @@
 
   if (typeof describe === 'function') {
     assert = require('assert');
-    describe('utility', function() {
+    describe('glass.build.utility', function() {
       return describe('isMatch', function() {
         return it("should work", function() {
           assert(isMatch("foo.js", ".js"));
