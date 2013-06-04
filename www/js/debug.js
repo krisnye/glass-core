@@ -1,0 +1,17 @@
+document.writeln("<script src='/js/modules/require.js'></script>");
+document.writeln("<script src='/js/modules/gl-matrix/index.js'></script>");
+document.writeln("<script src='/js/modules/glass/Component.js'></script>");
+document.writeln("<script src='/js/modules/glass/Enum.js'></script>");
+document.writeln("<script src='/js/modules/glass/String.js'></script>");
+document.writeln("<script src='/js/modules/glass/global.js'></script>");
+document.writeln("<script src='/js/modules/glass/index.js'></script>");
+document.writeln("<script src='/js/modules/glass/patch.js'></script>");
+document.writeln("<script src='/js/modules/sugar/index.js'></script>");
+document.writeln("<script src='/js/modules/glass/ui/Color.js'></script>");
+document.writeln("<script src='/js/modules/glass/ui/Control.js'></script>");
+document.writeln("<script src='/js/modules/glass/ui/Element.js'></script>");
+document.writeln("<script src='/js/modules/glass/ui/html/Control.js'></script>");
+document.writeln("<script src='/js/modules/glass/ui/html/index.js'></script>");
+document.writeln("<script src='/js/modules/glass/ui/webgl/Canvas.js'></script>");
+document.writeln("<script src='/js/modules/glass/ui/webgl/constants.js'></script>");
+document.writeln("<script src='/js/modules/glass/ui/webgl/index.js'></script>");

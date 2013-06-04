@@ -1,16 +1,22 @@
-config =
-    name: 'glass'
-    input: 'src'
-    node:
-        output: 'node'
-    browser:
-        output: 'browser'
+builder = require "glass-build"
 
-builder = require "./#{config.input}/build"
-utility = require "./#{config.input}/build/utility"
+config =
+    name: "glass"
+    source:
+        directory: 'src'
+    node:
+        directory: 'lib'
+    browser:
+        input:
+            "sugar": true
+            "gl-matrix": true
+        output:
+            directory: 'www/js'
+            webroot: 'www'
+            port: 9000
 
 task 'build', -> builder.build config
 task 'watch', -> builder.watch config
 task 'test', -> builder.test config
-task 'observe', ->
-    console.log Object.observe
+task 'bump', -> builder.bump config
+task 'publish', -> builder.publish config
