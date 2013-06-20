@@ -17,13 +17,12 @@ Object.merge exports,
             -> throw new Error "Can't create elements without document"
 
 # tests
-if typeof describe is 'function'
+exports.test = do ->
     assert = require('chai').assert
-    describe 'glass.ui.html', ->
-        if global.window?
-            describe 'createElement', ->
-                it 'creates with correct tag, attributes and children', ->
-                    element = exports.createElement '<div id="test">Test</div>'
-                    assert.equal element.tagName, 'DIV'
-                    assert.equal element.getAttribute('id'), 'test'
-                    assert.equal element.innerHTML, 'Test'
+    if global.window?
+        'createElement':
+            'creates with correct tag, attributes and children': ->
+                element = exports.createElement '<div id="test">Test</div>'
+                assert.equal element.tagName, 'DIV'
+                assert.equal element.getAttribute('id'), 'test'
+                assert.equal element.innerHTML, 'Test'

@@ -1,19 +1,23 @@
-builder = require "glass-build"
+builder = require 'glass-build'
 
 config =
-    name: "glass"
+    name: 'glass-core'
     source:
         directory: 'src'
     node:
         directory: 'lib'
     browser:
         input:
-            "sugar": true
-            "gl-matrix": true
+            '': true
+            'sugar': true
+            'gl-matrix': true
+            'glass-test': true
+            'json-schema': true
         output:
             directory: 'www/js'
             webroot: 'www'
-            port: 9000
+            test: 'glass-test'
+        port: 9000
 
 task 'build', -> builder.build config
 task 'watch', -> builder.watch config

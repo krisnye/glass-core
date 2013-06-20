@@ -39,20 +39,19 @@ module.exports = exports =
             container:
                 description: 'The element to add children to.  Usually same as this.element.'
 
-if typeof describe is 'function'
+exports.test = do ->
     assert = require('chai').assert
-    describe 'glass.ui.html.Control', ->
-        if global.window
-            it 'should be able to add to window', ->
-                control = new Control
-                    parent: global
-                    element: createElement '<span>Test</span>'
-                # check that parent is the body
-                assert.equal window.document.body, control.element.parentNode
-                # check that the last child in the body is the element
-                assert.equal window.document.body.lastChild, control.element
-                # now dispose the control
-                control.dispose()
-                # and make sure the element was actually removed
-                assert not control.element.parentNode?
+    if global.window
+        'should be able to add to window': ->
+            control = new Control
+                parent: global
+                element: createElement '<span>Test</span>'
+            # check that parent is the body
+            assert.equal window.document.body, control.element.parentNode
+            # check that the last child in the body is the element
+            assert.equal window.document.body.lastChild, control.element
+            # now dispose the control
+            control.dispose()
+            # and make sure the element was actually removed
+            assert not control.element.parentNode?
 

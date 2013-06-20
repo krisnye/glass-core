@@ -156,9 +156,8 @@ Color.whitesmoke = Color 245/255, 245/255,245/255
 Color.yellow = Color 255/255, 255/255,0/255
 Color.yellowgreen = Color 154/255, 205/255,50/255
 
-if typeof describe is 'function'
+exports.test = do ->
     assert = require('chai').assert
-    describe 'glass.ui.Color', ->
-        it "toRgbaString(Color.white) should yield rgba(255,255,255,1)", ->
-            assert.equal Color.toRgbaString(Color.white), 'rgba(255,255,255,1)'
+    "toRgbaString(Color.white) should yield rgba(255,255,255,1)": ->
+        assert.equal Color.toRgbaString(Color.white), 'rgba(255,255,255,1)'
 

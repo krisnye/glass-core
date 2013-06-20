@@ -2,11 +2,10 @@
 Object.merge String.prototype,
     isId: -> /^[^\d\W]\w*$/.test @
 
-if typeof describe is 'function'
+exports.test = do ->
     assert = require('chai').assert
-    describe 'String', ->
-        describe '#isId', ->
-            it "should match foo", -> assert "foo".isId()
-            it "should not match <foo>", -> assert not "<foo>".isId()
-            it "should not match 2foo", -> assert not "2foo".isId()
+    '#isId':
+        "should match foo": -> assert "foo".isId()
+        "should not match <foo>": -> assert not "<foo>".isId()
+        "should not match 2foo": -> assert not "2foo".isId()
 

@@ -3,8 +3,7 @@ require './global'
 # target value should never include reference types from values
 apply = (target, values, deleteUndefined = true) ->
     return Object.clone(values, true) unless values?.constructor is Object
-    if target?.constructor isnt Object
-        target = {}
+    target = {} unless Object.isObject target
     for key, value of values
         patchedValue = apply target[key], value, deleteUndefined
         if value is undefined and deleteUndefined
@@ -67,30 +66,25 @@ module.exports = exports =
     combine: combine
     watch: watch
 
-if typeof describe is 'function'
-    assert = require('chai').assert
-    describe 'glass.patch', ->
-        it 'should work', (done) ->
-            source =
-                name: 'Kris'
-                age: 41
-                children:
-                    Sadera:
-                        grandchildren:
-                            One: 1
-                            Two: 2
-                    Orion: {}
-            target = Object.clone source
-            unwatch = watch source, (patch) ->
-                target = apply target, patch
-                # test that source and target are equivalent
-                assert Object.equal source, target
-                done()
-                unwatch()
-            source.name = 'Fred'
-            source.children.Orion = {a:1,b:2}
-            source.children.Orion.c = 12
-            source.children.Sadera.grandchildren.three = 3
-
-
-
+assert = require('chai').assert
+exports.test = (done) ->
+    source =
+        name: 'Kris'
+        age: 41
+        children:
+            Sadera:
+                grandchildren:
+                    One: 1
+                    Two: 2
+            Orion: {}
+    target = Object.clone source
+    unwatch = watch source, (patch) ->
+        target = apply target, patch
+        # test that source and target are equivalent
+        assert Object.equal source, target
+        done()
+        unwatch()
+    source.name = 'Fred'
+    source.children.Orion = {a:1,b:2}
+    source.children.Orion.c = 12
+    source.children.Sadera.grandchildren.three = 3
