@@ -68,6 +68,7 @@ module.exports = exports =
 
 assert = require('chai').assert
 exports.test = (done) ->
+    return "Object.observe missing." unless Object.observe?
     source =
         name: 'Kris'
         age: 41

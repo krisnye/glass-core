@@ -1,6 +1,12 @@
 
 module.exports = exports =
-    Color = (r, g, b, a = 1.0) -> new Float32Array [r, g, b, a]
+    Color = (r, g, b, a = 1.0) ->
+        array = new Float32Array 4
+        array[0] = r
+        array[1] = g
+        array[2] = b
+        array[3] = a
+        return array
 
 #   converts a color to "rgba(255,255,255,1)" style strings.
 Color.toRgbaString = (color) ->
@@ -159,5 +165,7 @@ Color.yellowgreen = Color 154/255, 205/255,50/255
 exports.test = do ->
     assert = require('chai').assert
     "toRgbaString(Color.white) should yield rgba(255,255,255,1)": ->
+        console.log JSON.stringify Color.white
+        console.log JSON.stringify Color.toRgbaString(Color.white)
         assert.equal Color.toRgbaString(Color.white), 'rgba(255,255,255,1)'
 

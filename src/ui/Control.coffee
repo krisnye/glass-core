@@ -2,7 +2,7 @@ Element = require './Element'
 
 module.exports = exports =
     Control = Element.extend
-        id: 'glass.ui.Control'
+        name: 'Control'
         properties:
             # rectangle properties here.
             draw: draw = (c) ->

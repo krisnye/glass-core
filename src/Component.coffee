@@ -1,4 +1,4 @@
-require './global'
+glass = require './'
 jsonSchema = require 'json-schema'
 
 generateId = (parent, type) ->
@@ -10,56 +10,59 @@ generateId = (parent, type) ->
     counts[name] = count
     return "#{name}_#{count}"
 
-module.exports = exports = Component = class glass_Component
+module.exports = exports = Component = class Component
     constructor: (properties) ->
         @initialize properties
         @
 
-isPrimitive = (object) ->
-    Object.isNumber(object) or Object.isBoolean(object) or Object.isString(object)
+serializeProperty = (object, name, property) ->
+    property ?= object.constructor.properties?[name]
+    if property?.serialize?
+        return property.serialize
+    if property?.get?
+        return false
+    if name[0] is '_'
+        return false
+    return object.hasOwnProperty name
 
-Component.normalizeProperties = (properties={}, definingClass) ->
-    for name, property of properties
-        if Object.isFunction(property)
-            property =
-                writable: false
-                value: property
-        else if not property? or isPrimitive(property) or Object.isArray(property)
-            property =
-                value: property
+glass.defineProperties Component, (
+    isComponentType: (type) -> type? and type.id? and type.properties? and type.extend?
+    id: module.id
+    toString: -> @id
+    valueOf: -> @value ? @id
+    disposeProperties: (object) ->
+        for key, value of object
+            if value? and value.parent is object and Object.isFunction value.dispose
+                value.dispose()
+        return
+    fromJSON: (values, fromFunction) ->
+        getComponentType = (value) ->
+            typeId = value?[glass.serialize.typeKey.toString()]
+            if typeId? and Component.isComponentType type = require typeId
+                return type
+            return null
 
-        if not property.get? and not property.set? and not property.hasOwnProperty('value')
-            property.value = undefined
-
-        if property.hasOwnProperty 'value'
-            # default property values to writable
-            property.writable ?= true
-
-        # set the id of functions to their property name
-        if Object.isFunction property.value
-            property.value.id ?= name
-
-        if definingClass?
-            property.definingClass ?= definingClass
-            if Object.isFunction property.value
-                property.value.definingClass ?= definingClass
-        properties[name] = property
-    properties
-
-Component.defineProperties = (object, properties, definingClass) ->
-    properties = Component.normalizeProperties properties, definingClass
-    Object.defineProperties object, properties
-    properties
-
-Component.disposeProperties = (object) ->
-    for key, value of object
-        if value? and value.parent is object and Object.isFunction value.dispose
-            value.dispose()
-    return
-
-Component.id = "glass.Component"
-Component.toString = -> @id
-Component.valueOf = -> @value ? @id
+        # remove sub-components from properties
+        children = null
+        for key, value of values
+            if getComponentType(value)?
+                children ?= {}
+                children[key] = value
+                delete values[key]
+            else
+                values[key] = fromFunction value
+        # construct the value
+        parent = new @ values
+        # create the children
+        if children?
+            for key, value of children
+                value.id = key
+                value.parent = parent
+                fromFunction value
+        parent
+    extend: (subClassDefinition) ->
+        extend @, subClassDefinition
+    ), {enumerable: true}
 
 state =
     constructed: 0
@@ -72,27 +75,31 @@ properties =
     id:
         get: -> @_id
         set: (value) ->
-            if @_state > state.constructed
-                throw new Error "id can only be specified in constructor"
-            @_id = value
+            if @_state is state.constructed
+                @_id = value
+            value
+        serialize: true
         unique: true
     parent:
         get: -> @_parent
         set: (value) ->
-            if @_state > state.constructed
-                throw new Error "parent can only be specified in constructor"
-            @_parent = value
-        persist: false
+            if @_state is state.constructed
+                @_parent = value
+            value
+        serialize: false
     inner:
         description: "Calls the subclass defined function if present."
-        value: (fn, args...)->
+        value: (fn, args...) ->
             # get and cache the name of the underride function
             innerName = fn.innerName ?= getUnderrideName fn.definingClass, fn.id
             @[innerName]?.apply @, args
     # lifecycle
     _state:
         value: state.constructed
-        persist: false
+        serialize: false
+    serialize:
+        value: true
+        serialize: false
     initialize: initialize = (properties) ->
         if properties?
             # first set ourselves onto parent if we have one
@@ -103,6 +110,11 @@ properties =
             # second we set all properties in case setters access parent
             for key, value of properties
                 @[key] = value
+        # if the parent is initializing then this component
+        # shouldn't be serializeed since the parent will just
+        # add it again when deserialized and reinitialized.
+        if @parent?._state is state.initializing
+            @serialize = false
         # finally we call subclass initializer
         @_state = state.initializing
         @inner initialize
@@ -118,20 +130,36 @@ properties =
         return
     disposed:
         get: -> @_state >= state.disposed
-        persist: false
+        serialize: false
     # serialization
     toJSON: ->
         values = {}
+        # write the type
+        values[glass.serialize.typeKey.toString()] = @constructor.id
+        # declared properties
         for name, property of @constructor.properties
-            if property.persist isnt false and (property.get? or @hasOwnProperty name)
+            if serializeProperty @, name, property
                 value = @[name]
-                if value?.toJSON?
-                    value = value.toJSON()
-                values[name] = value
+                if value?.serialize isnt false
+                    if value?.toJSON?
+                        value = value.toJSON()
+                    values[name] = value
+        # dynamic properties
+        for name, value of @ when not values.hasOwnProperty name
+            if serializeProperty @, name
+                if value?.serialize isnt false
+                    if value?.toJSON?
+                        value = value.toJSON()
+                    values[name] = value
         values
     # discovery
-    get: (id, parsed) ->
+    get: get = (id, parsed) ->
         throw new Error "id is required" unless id?
+
+        value = @inner get, id, parsed
+        if value isnt undefined
+            return value
+
         value = @[id]
         if value?
             if value.disposed is true
@@ -185,7 +213,7 @@ properties =
         else
             return result.errors
 
-Component.properties = Component.defineProperties Component.prototype, properties, Component
+Component.properties = glass.defineProperties Component.prototype, properties, Component
 
 getUnderrideName = (baseDefiningClass, name) ->
     "#{baseDefiningClass.name}_subclass_#{name}"
@@ -217,9 +245,8 @@ underride = (classDefinition, properties, rootDefiningClass, name, fn) ->
     return
 
 extend = (baseClass, subClassDefinition) ->
-    throw new Error "missing id property" unless Object.isString subClassDefinition?.id
-
-    subClassDefinition.name = subClassDefinition.id.replace /[\.\/]/g, '_'
+    subClassDefinition.name ?= subClassDefinition.id?.match(/([a-z_0-9\$]+)(\.js)?$/i)?[1]
+    throw new Error "missing name property" unless Object.isString subClassDefinition.name
 
     subClass = eval """
         (function #{subClassDefinition.name}(properties) {
@@ -227,13 +254,13 @@ extend = (baseClass, subClassDefinition) ->
         })
     """
 
-    subProperties = subClassDefinition.properties = Component.normalizeProperties subClassDefinition.properties, subClass
+    subProperties = subClassDefinition.properties = glass.normalizeProperties subClassDefinition.properties, subClass
     prototype = subClass.prototype
     properties = Object.clone baseClass.properties
 
     for name, property of subProperties
         baseProperty = properties[name]
-        if Object.isFunction baseProperty?.value
+        if Object.isFunction(baseProperty?.value) and baseProperty.override isnt true
             if not Object.isFunction property.value
                 throw new Error "Functions can only be overridden with other functions: #{property.value}"
             # if method defined in A, but not overrode in B, then C
@@ -243,24 +270,25 @@ extend = (baseClass, subClassDefinition) ->
             properties[name] = property
 
     subClassDefinition.properties = properties
-    Object.merge subClass, subClassDefinition
 
-    Component.defineProperties prototype, properties, subClass
     # add an extend method to the subclass
-    subClass.extend = (subClassDefinition) -> extend subClass, subClassDefinition
-    subClass
+    for name in ["extend", "fromJSON", "toString", "valueOf"]
+        subClass[name] = Component[name]
 
-Component.extend = (subClassDefinition) ->
-    extend Component, subClassDefinition
+    Object.merge subClass, subClassDefinition, false, false
+
+    glass.defineProperties prototype, properties, subClass
+
+    subClass
 
 assert = require('chai').assert
 exports.test =
     "should have an id": ->
         assert Object.isString Component.id
     "its toString should return it's id": ->
-        assert.equal Component.toString(), "glass.Component"
+        assert.equal Component.toString(), Component.id
     "should have a name": ->
-        assert.equal Component.name, "glass_Component"
+        assert.equal Component.name, "Component"
     '#dispose': 
         'should mark self disposed': ->
             a = new Component
@@ -276,21 +304,6 @@ exports.test =
             a = new Component parent:parent
             a.dispose()
             assert not parent[a.id]?
-    '#defineProperties': 
-        "should allow primitive values": ->
-            object = {}
-            Component.defineProperties object,
-                f: -> "function"
-                i: 2
-                b: true
-                a: []
-                s: "hello"
-            assert Object.isFunction object.f
-            assert.equal object.f(), "function"
-            assert.equal object.i, 2
-            assert.equal object.b, true
-            assert Object.equal object.a, []
-            assert.equal object.s, "hello"
     '#Constructor': 
         'should set itself as property on parent': ->
             parent = {}
@@ -299,42 +312,66 @@ exports.test =
             assert.equal parent[a.id], a
             a.dispose()
         'should not let late parent assignment': ->
-            assert.throws ->
-                a = new Component
-                a.parent = {}
+            a = new Component
+            a.parent = {}
+            assert not a.parent?
         'should generate a missing id if it has a parent': ->
             parent = {}
             a = new Component parent:parent
             assert Object.isString a.id
             a.dispose()
-    "#get": 
+    "#get":
         'should throw exception if instance not found': ->
             a = new Component
             assert.throws -> a.get "foo"
             a.dispose()
         'should create instances with factory': ->
+            SubComponent = Component.extend
+                id: 'SubComponent'
             a = new Component
             b = new Component parent: a
             # register a factory on the parent a
-            a[Component] = Component
-            c = b.get 'glass.Component:{"x":2,"y":3}'
+            a[SubComponent] = SubComponent
+            c = b.get 'SubComponent:{"x":2,"y":3}'
             assert.equal c.x, 2
             assert.equal c.y, 3
             assert.equal c.parent, a
             a.dispose()
-    'extend': 
+    'serialize': ->
+        SubComponent = Component.extend
+            id: module.id # have to deserialize as component since we aren't our own module
+            properties:
+                initialize: ->
+                    new Component
+                        id: 'a'
+                        parent: @
+        s = new SubComponent()
+        p = new Component
+            parent: s
+            foo: 2
+        assert.equal s.serialize, true
+        assert s.a?, 'child component a exists.'
+        assert.equal s.a.serialize, false
+        serialized = glass.serialize s
+        # assert.equal serialized, '{"$type":"SubComponent","Component_1":{"$type":"glass-core/Component","foo":2}}'
+        result = glass.deserialize serialized
+        assert.equal result.Component_1?.parent, result
+        assert.equal result.Component_1?.foo, 2
+        # this is not a perfect test because we changed the type of the reconstituted value
+        assert.equal serialized, glass.serialize result
+    'extend':
         'should inherit instance properties': ->
             SubComponent = Component.extend
-                id: 'SubComponent'
+                name: 'SubComponent'
             assert SubComponent.properties.id?
         'should define static properties': ->
             SubComponent = Component.extend
-                id: 'SubComponent'
+                name: 'SubComponent'
                 staticValue: 2
             assert.equal SubComponent.staticValue, 2
         'should allow underriding constructors and functions': ->
             SubComponent = Component.extend
-                id: 'SubComponent'
+                name: 'SubComponent'
                 properties:
                     initialize: ->
                         @constructorCalled = true
@@ -349,28 +386,28 @@ exports.test =
             assert sub.disposeCalled
         'should allow recursive extension': ->
             AComponent = Component.extend
-                id: 'AComponent'
+                name: 'AComponent'
                 properties:
                     dispose: -> # does not call AComponent_subclass_dispose
             BComponent = AComponent.extend
-                id: 'BComponent'
+                name: 'BComponent'
                 properties:
                     foo: ->
             return
         'should not allow final functions to be underridden': ->
             AComponent = Component.extend
-                id: 'AComponent'
+                name: 'AComponent'
                 properties:
                     dispose: -> # does not call AComponent_subclass_dispose
             assert.throws ->
                 BComponent = AComponent.extend
-                    id: 'BComponent'
+                    name: 'BComponent'
                     properties:
                         dispose: -> # cannot underride this method
     'validation': 
         'should work': ->
             Person = Component.extend
-                id: 'SubComponent'
+                name: 'SubComponent'
                 properties:
                     name:
                         type: 'string'

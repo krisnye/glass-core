@@ -1,4 +1,5 @@
 require 'sugar'
+require './String'
 
 # get the global object
 global = do -> @
@@ -10,5 +11,3 @@ module.exports = exports = global
 # will have to figure out how to shim this correctly.
 global.process ?= {}
 global.process.nextTick ?= (fn) -> setTimeout fn, 0
-
-global.Float32Array ?= Array

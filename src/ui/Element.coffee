@@ -2,7 +2,7 @@ Component = require '../Component'
 
 module.exports = exports =
     Element = Component.extend
-        id: 'glass.ui.Element'
+        name: 'Element'
         properties:
             visible: true
             draw: draw = (c) ->
