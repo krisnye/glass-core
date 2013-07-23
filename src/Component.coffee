@@ -1,5 +1,4 @@
 glass = require './'
-jsonSchema = require 'json-schema'
 
 generateId = (parent, type) ->
     name = type.name
@@ -201,17 +200,6 @@ properties =
         else if throwError
             throw new Error "Component not found: #{id}"
         return value
-    # validation
-    constrain: ->
-        # remove obsolete properties
-        # enforce minimum, maximum values
-        # truncate to maxLength on strings
-    validate: ->
-        result = jsonSchema.validate @, @constructor
-        if result.valid
-            return null
-        else
-            return result.errors
 
 Component.properties = glass.defineProperties Component.prototype, properties, Component
 
@@ -345,7 +333,7 @@ exports.test =
                     new Component
                         id: 'a'
                         parent: @
-        s = new SubComponent()
+        s = new SubComponent
         p = new Component
             parent: s
             foo: 2
@@ -404,32 +392,4 @@ exports.test =
                     name: 'BComponent'
                     properties:
                         dispose: -> # cannot underride this method
-    'validation': 
-        'should work': ->
-            Person = Component.extend
-                name: 'SubComponent'
-                properties:
-                    name:
-                        type: 'string'
-                        required: true
-                        minLength: 2
-                        maxLength: 100
-                    age:
-                        type: 'integer'
-                        minimum: 0
-                        maximum: 130
-                    key:
-                        type: 'string'
-            invalid = new Person
-                name: "a"
-                age: -2
-            errors = invalid.validate()
-            assert errors?.length is 2, JSON.stringify errors
-            valid = new Person
-                name: "good"
-                age: 112
-            errors = valid.validate()
-            if errors?.length > 0
-                console.log JSON.stringify errors
-            assert not errors?
 

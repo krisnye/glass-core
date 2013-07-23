@@ -16,6 +16,9 @@ module.exports = User = (require '../Component').extend
             type: 'string'
         isAdmin:
             type: 'boolean'
+        token:
+            type: 'string'
+            index: true
         loginUrl:
             type: 'string'
             format: 'uri'

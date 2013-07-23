@@ -1,4 +1,4 @@
-jsonSchema = require 'json-schema'
+glassSchema = require '../schema'
 
 module.exports = ValidationLayer = (require './DataLayer').extend
     id: module.id
@@ -6,9 +6,9 @@ module.exports = ValidationLayer = (require './DataLayer').extend
         # updates a component with new values
         patch: (key, values) ->
             schema = key.type
-            result = jsonSchema.validate values, schema
-            if not result.valid
-                throw new Error "422 " + JSON.stringify result.errors
+            errors = glassSchema.validate values, schema
+            if errors?
+                throw new Error "422 " + JSON.stringify errors
             @parent?.patch key, values
         # watches a component for changes
         watch: (key, handler) ->

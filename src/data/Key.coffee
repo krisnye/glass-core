@@ -17,6 +17,21 @@ parse = (key) ->
             throw new Error "invalid key query: #{key}, #{e}"
     return result
 
+join = (steps) ->
+    # in the future, consider escaping any '/' values in the steps
+    # probably consistent with json-pointer spec
+    path = ""
+    for step, i in steps when step?
+        if step.constructor is Object
+            path += "?" + JSON.stringify step
+        else
+            if Object.isFunction step
+                step = step.name
+            if path.length > 0
+                path += "/"
+            path += step
+    path
+
 stringify = (properties) ->
     buffer = []
     if properties.parent?
@@ -30,14 +45,21 @@ stringify = (properties) ->
     buffer.join ''
 
 module.exports = exports = class Key
-    constructor: (keystring, namespace) ->
-        throw new Error "keystring is required" unless keystring?
+    constructor: (namespace, path) ->
         throw new Error "namespace is required" unless namespace?
+        # allow leaving off namespace if first part of path is a type
+        pathStart = 1
+        missingNamespace = Object.isFunction(namespace) and namespace.id?
+        if missingNamespace
+            pathStart = 0
+        path = join Array.prototype.slice.call arguments, pathStart
+        if missingNamespace
+            namespace = Key.getNamespaceFromModuleId namespace.id
         # parse values
-        properties = if Object.isObject(keystring) then keystring else parse keystring
+        properties = parse path
         # turn the parent into a key
         if properties.parent?
-            properties.parent = new Key properties.parent, namespace
+            properties.parent = new Key namespace, properties.parent
         # deep freeze the properties
         glass.freeze properties, true
         # set properties on this key
@@ -47,28 +69,66 @@ module.exports = exports = class Key
         # if a namespace is present then convert the type to an actual type
         if @namespace? and @type?
             try
-                @type = require @namespace + @type
+                @type = require typeId = @namespace + @type
             catch e
-                throw "#{JSON.stringify @type} not found in key: #{JSON.stringify keystring} (#{e})"
+                throw new Error "#{JSON.stringify typeId} not found in key: #{JSON.stringify path} (#{e})"
         # shallow freeze these properties (we don't want to freeze the type)
         glass.freeze @, false
         return @
+    isAncestor: (key) ->
+        return false unless key? and @parent
+        if @parent.toString() is key.toString()
+            return true
+        else
+            return @parent.isAncestor key
     toString: -> @_toStringValue ?= stringify @
     valueOf: -> @toString()
     toJSON: -> @toString()
 
+Key.id = module.id
+Key.join = (steps...) -> join steps
+Key.getNamespaceFromModuleId = (moduleId) ->
+    /^(([^\/\\]+[\/\\])*)/.exec(moduleId)[1]
+
 exports.test = do ->
     assert = require('chai').assert
     toString: ->
-        key = new Key 'Project/2/Task/2?{"alpha":2}', "./sample/"
+        key = new Key "./sample/", 'Project/2/Task/2?{"alpha":2}'
         assert key.parent instanceof Key
         assert.equal key.parent.toString(), 'Project/2'
         assert.equal key.query.alpha, '2'
     frozen: ->
-        key = new Key 'Project/2/Task/2?{"alpha":2}', "./sample/"
+        key = new Key "./sample/", 'Project/2/Task/2?{"alpha":2}'
         # try to set a value, should fail
         key.query.beta = 3
         assert.equal key.query.beta, undefined
+    impliedNamespace: ->
+        key0 = new Key Key, "12"
+        assert.equal "Key/12", key0.toString()
+        key1 = new Key key0.namespace, key0, Key, "12"
+        assert key1?
+    isAncestor: ->
+        key1 = new Key "./sample/", 'User/3/Project/2/Task/2?{"alpha":2}'
+        assert key1.isAncestor "User/3"
+        assert key1.isAncestor "User/3/Project/2"
+        assert not key1.isAncestor "Project/2"
+        assert not key1.isAncestor "Task/2"
+    creation: ->
+        key1 = new Key "./sample/", 'Project/2/Task/2?{"alpha":2}'
+        key2 = new Key "./sample/", 'Project', '2', 'Task', '2', {"alpha":2}
+        assert.deepEqual key1, key2
+        key3 = new Key "./sample/", null, 'Project', 'me'
+        assert.equal 'Project/me', key3.toString()
+    join: ->
+        path = Key.join "Foo", "12314123"
+        assert.equal "Foo/12314123", path
+    getNamespaceFromModuleId: ->
+        ns = Key.getNamespaceFromModuleId "foo/bar/baz"
+        assert.equal ns, "foo/bar/"
+        ns = Key.getNamespaceFromModuleId "foo\\bar\\baz"
+        assert.equal ns, "foo\\bar\\"
+        ns = Key.getNamespaceFromModuleId "foo-bar"
+        assert.equal ns, ""
     parse: ->
         tests =
             # parent, type, id, query

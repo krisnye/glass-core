@@ -45,6 +45,14 @@ defineProperties exports,
     isPrimitive: isPrimitive
     normalizeProperties: normalizeProperties
     defineProperties: defineProperties
+    first: (a) ->
+        if not a?
+            return null
+        else if Array.isArray a
+            return a[0]
+        else
+            for key, value of a
+                return value
     cache: (name, fn) ->
         (object = @) ->
             if not object.hasOwnProperty name

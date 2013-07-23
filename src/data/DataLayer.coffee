@@ -8,10 +8,10 @@ module.exports = DataLayer = (require '../Component').extend
     properties:
         # updates a component with new values
         patch: patch = (key, values) ->
-            console.log "begin patch (#{key})", @constructor
+            # console.log "begin patch (#{key}), (#{JSON.stringify values})", @constructor
             @inner patch, key, values
         # watches a component for changes
         watch: watch = (key, handler) ->
-            console.log "begin watch (#{key})", @constructor
+            # console.log "begin watch (#{key})", @constructor
             @inner watch, key, handler
 
