@@ -24,20 +24,25 @@ serializeProperty = (object, name, property) ->
         return false
     return object.hasOwnProperty name
 
-glass.defineProperties Component, (
-    isComponentType: (type) -> type? and type.id? and type.properties? and type.extend?
+inherit = (fn) ->
+    fn.inherit = true
+    return {enumerable: true, value: fn}
+
+glass.defineProperties Component,
+    isType: inherit (baseClass) -> @ is baseClass or @baseClasses?[baseClass?.id]?
+    baseClasses: {}
     id: module.id
-    toString: -> @id
-    valueOf: -> @value ? @id
+    toString: inherit -> @id
+    valueOf: inherit -> @value ? @id
     disposeProperties: (object) ->
         for key, value of object
             if value? and value.parent is object and Object.isFunction value.dispose
                 value.dispose()
         return
-    fromJSON: (values, fromFunction) ->
+    fromJSON: inherit (values, fromFunction) ->
         getComponentType = (value) ->
             typeId = value?[glass.serialize.typeKey.toString()]
-            if typeId? and Component.isComponentType type = require typeId
+            if typeId? and (type = require typeId).isType?(Component)
                 return type
             return null
 
@@ -59,9 +64,7 @@ glass.defineProperties Component, (
                 value.parent = parent
                 fromFunction value
         parent
-    extend: (subClassDefinition) ->
-        extend @, subClassDefinition
-    ), {enumerable: true}
+    extend: inherit (subClassDefinition) -> extend @, subClassDefinition
 
 state =
     constructed: 0
@@ -77,6 +80,8 @@ properties =
             if @_state is state.constructed
                 @_id = value
             value
+        type: 'string'
+        index: true
         serialize: true
         unique: true
     parent:
@@ -155,6 +160,9 @@ properties =
     get: get = (id, parsed) ->
         throw new Error "id is required" unless id?
 
+        if id is @id or id.isType? and @constructor.isType id
+            return @
+
         value = @inner get, id, parsed
         if value isnt undefined
             return value
@@ -169,7 +177,7 @@ properties =
         throwError = not parsed?
         # now we have to look for it
         # parse the id if it matches our format
-        if not parsed?
+        if not parsed? and Object.isString id
             colon = id.indexOf ':'
             if colon > 0
                 parsed =
@@ -201,7 +209,8 @@ properties =
             throw new Error "Component not found: #{id}"
         return value
 
-Component.properties = glass.defineProperties Component.prototype, properties, Component
+glass.defineProperties Component.prototype, properties, Component
+Component.properties = properties
 
 getUnderrideName = (baseDefiningClass, name) ->
     "#{baseDefiningClass.name}_subclass_#{name}"
@@ -245,7 +254,6 @@ extend = (baseClass, subClassDefinition) ->
     subProperties = subClassDefinition.properties = glass.normalizeProperties subClassDefinition.properties, subClass
     prototype = subClass.prototype
     properties = Object.clone baseClass.properties
-
     for name, property of subProperties
         baseProperty = properties[name]
         if Object.isFunction(baseProperty?.value) and baseProperty.override isnt true
@@ -256,12 +264,16 @@ extend = (baseClass, subClassDefinition) ->
             underride subClassDefinition, properties, baseProperty.definingClass, name, property.value
         else
             properties[name] = property
-
     subClassDefinition.properties = properties
 
-    # add an extend method to the subclass
-    for name in ["extend", "fromJSON", "toString", "valueOf"]
-        subClass[name] = Component[name]
+    # inherit static properties marked inherit
+    for name, value of baseClass when value?.inherit
+        subClass[name] = baseClass[name]
+
+    # add baseClass property for use in checking instance
+    baseClasses = Object.clone(baseClass.baseClasses) ? {}
+    baseClasses[baseClass.id] = baseClass
+    subClass.baseClasses = baseClasses
 
     Object.merge subClass, subClassDefinition, false, false
 
@@ -381,6 +393,19 @@ exports.test =
                 name: 'BComponent'
                 properties:
                     foo: ->
+            # also check that isType works
+            assert Component.isType Component
+            assert AComponent.isType Component
+            assert BComponent.isType Component
+            assert BComponent.isType AComponent
+            assert not AComponent.isType BComponent
+            # check get ancestor by type
+            a = new AComponent id:'root'
+            b = new Component parent:a
+            c = b.get AComponent
+            assert a == c, "get(AComponent) should return AComponent parent"
+            c = b.get 'root'
+            assert a == c, "get('root') should return AComponent parent"
             return
         'should not allow final functions to be underridden': ->
             AComponent = Component.extend

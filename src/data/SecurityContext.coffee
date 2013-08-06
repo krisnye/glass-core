@@ -1,8 +1,8 @@
 Key = require './Key'
 glassSchema = require '../schema'
 
-getGetFunction = (key, data) ->
-    (path...) -> data.watch new Key(key.namespace, path...)
+getGetFunction = (key, dataLayer) ->
+    (path...) -> dataLayer.watch new Key(key.namespace, path...)
 
 module.exports = SecurityContext = (require '../Component').extend
     id: module.id
@@ -27,24 +27,39 @@ module.exports = SecurityContext = (require '../Component').extend
                 return true
         canRead: -> @canAccess "read"
         canWrite: -> @canAccess "write"
-        prune: (document, access) ->
+        prune: (object, access) ->
             throw new Error "access required" unless access?
-            @value = @document = document
+            @value = object
             @schema = @key.type
             return undefined unless @canAccess access
             # we can access the document, now prune properties
-            glassSchema.prune @document, @schema, (parent, name, object, schema) =>
+            glassSchema.prune object, @schema, (parent, name, object, schema) =>
                 @value = object
                 @schema = schema
                 return @canAccess access
-            return @document
-
-    getSecurityContext: (key, data) ->
+            return object
+        pruneResults: (results, access = 'read') ->
+            # now apply security rules to prune the results
+            if @key.id?
+                # single results
+                @document = results
+                results = @prune results, access
+            else
+                # multiple results
+                for name, value of results
+                    @document = value
+                    value = @prune value, access
+                    if not value?
+                        # we really shouldn't need to prune any entire results from a query.
+                        console.log 'WARNING: Pruning results #{name} from query: #{key}'
+                        delete results[name]
+            return results
+    getSecurityContext: (key, dataLayer) ->
         type = key.type
         throw new Error "403 kindless queries not allowed" unless type?
 
         if type.security?.query?
-            properties = type.security.query key, getGetFunction(key, data)
+            properties = type.security.query key, getGetFunction(key, dataLayer)
             throw new Error "403 unauthorized query" unless properties
             # make sure we don't use any reserved properties
             for name of properties

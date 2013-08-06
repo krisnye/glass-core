@@ -9,12 +9,12 @@ keyMap =
     query: 9
 parse = (key) ->
     result = glass.match keyRegex, keyMap, key
-    throw new Error "invalid key: #{key}" unless result?
+    throw new Error "400 invalid key: #{key}" unless result?
     if result.query?
         try
             result.query = JSON.parse result.query
         catch e
-            throw new Error "invalid key query: #{key}, #{e}"
+            throw new Error "400 invalid key query: #{key}, #{e}"
     return result
 
 join = (steps) ->

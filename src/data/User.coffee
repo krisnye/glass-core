@@ -1,7 +1,6 @@
 
-module.exports = User = (require '../Component').extend
+module.exports = User = (require './Persistent').extend
     id: module.id
-    persistent: true
     properties:
         email:
             type: 'string'
@@ -16,7 +15,7 @@ module.exports = User = (require '../Component').extend
             type: 'string'
         isAdmin:
             type: 'boolean'
-        token:
+        userToken:
             type: 'string'
             index: true
         loginUrl:

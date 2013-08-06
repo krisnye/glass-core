@@ -1,7 +1,6 @@
 
-module.exports = Task = (require '../../Component').extend
+module.exports = Task = (require '../Persistent').extend
     id: 'glass-core/data/sample/Task'
-    persistent: true
     properties:
         projectId:
             foreignKey:

@@ -1,12 +1,11 @@
 
 module.exports = Project = (require '../Persistent').extend
     id: module.id
-    persistent: true
     security:
         query: (key, get) ->
             # projects are only contained/owned by Users.
             user = get "User/me"
-            if key.isAncestor user.id
+            if user.isAdmin or key.isAncestor user.id
                 {user:user}
             else
                 false
@@ -16,6 +15,11 @@ module.exports = Project = (require '../Persistent').extend
             required: true
             minLength: 2
             maxLength: 128
+        complete:
+            type: 'integer'
+            minimum: 0
+            maximum: 100
+            index: true
         options:
             properties:
                 public:
@@ -24,6 +28,10 @@ module.exports = Project = (require '../Persistent').extend
                     type: 'string'
                     security:
                         read: false
+                unwriteable:
+                    type: 'string'
+                    security:
+                        write: false
         milestones:
             foreignCopy:
                 type: 'Task'

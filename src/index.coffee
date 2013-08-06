@@ -3,46 +3,51 @@ require './global'
 isPrimitive = (object) ->
     Object.isNumber(object) or Object.isBoolean(object) or Object.isString(object)
 
-normalizeProperties = (properties={}, defaults) ->
+normalizeProperty = (name, property, defaults) ->
+    if Object.isFunction(property)
+        property =
+            writable: false
+            value: property
+    else if not property? or isPrimitive(property) or Object.isArray(property)
+        property =
+            value: property
+
+    if not property.get? and not property.set? and not property.hasOwnProperty('value')
+        property.value = undefined
+
+    if property.hasOwnProperty 'value'
+        # default property values to writable
+        property.writable ?= true
+
+    # set the id of functions to their property name
+    if Object.isFunction property.value
+        property.value.id ?= name
+
+    if defaults?
+        Object.merge property, defaults, true, false
+
+    if property.definingClass?
+        if Object.isFunction property.value
+            property.value.definingClass ?= property.definingClass
+
+    property
+
+normalizeProperties = (properties = {}, defaults) ->
     if Object.isFunction defaults
         defaults = definingClass: defaults
 
     for name, property of properties
-        if Object.isFunction(property)
-            property =
-                writable: false
-                value: property
-        else if not property? or isPrimitive(property) or Object.isArray(property)
-            property =
-                value: property
-
-        if not property.get? and not property.set? and not property.hasOwnProperty('value')
-            property.value = undefined
-
-        if property.hasOwnProperty 'value'
-            # default property values to writable
-            property.writable ?= true
-
-        # set the id of functions to their property name
-        if Object.isFunction property.value
-            property.value.id ?= name
-
-        if defaults?
-            Object.merge property, defaults, true, false
-
-        if property.definingClass?
-            if Object.isFunction property.value
-                property.value.definingClass ?= property.definingClass
-        properties[name] = property
+        properties[name] = normalizeProperty name, property, defaults
     properties
 
 defineProperties = (object, properties, defaults) ->
     properties = normalizeProperties properties, defaults
     Object.defineProperties object, properties
-    properties
+    return object
 
 defineProperties exports,
     isPrimitive: isPrimitive
+    normalizeProperty: normalizeProperty
     normalizeProperties: normalizeProperties
     defineProperties: defineProperties
     first: (a) ->
@@ -72,32 +77,37 @@ defineProperties exports,
             if result[value]?
                 object[key] = result[value]
         object
+    parse: parse = (string) -> JSON.parse string
+    stringify: stringify = (value) -> JSON.stringify value
     serialize: serialize = do ->
-        value = (object) -> JSON.stringify object
+        value = (object) -> stringify object
         value.typeKey = '$type'
         value
     deserialize: deserialize = do ->
         fromJSON = (value) ->
             if Object.isString typeId = value?[serialize.typeKey]
-                delete value[serialize.typeKey]
                 try
-                    type = require typeId
+                    type = deserialize.require typeId
                 catch e
                     throw new Error "#{typeId} specified in JSON value #{JSON.stringify value} was not found: #{e}"
+                delete value[serialize.typeKey]
             if type?
                 if Object.isFunction type.fromJSON
                     value = type.fromJSON value, fromJSON
                 else
                     value = new type value
             value
-        (string, defaults) ->
+        result = (string, defaults) ->
             if Object.isObject string
                 json = Object.clone string
             else
-                json = JSON.parse string
+                json = parse string
             if defaults? and Object.isObject json
                 Object.merge json, defaults, false, false
             fromJSON json
+        # store the type loader statically on the result
+        result.require = require
+        return result
 
 exports.test = do ->
     assert = require('chai').assert
@@ -113,12 +123,13 @@ exports.test = do ->
     defineProperties: 
         "should allow primitive values": ->
             object = {}
-            defineProperties object,
+            result = defineProperties object,
                 f: -> "function"
                 i: 2
                 b: true
                 a: []
                 s: "hello"
+            assert.equal object, result
             assert Object.isFunction object.f
             assert.equal object.f(), "function"
             assert.equal object.i, 2

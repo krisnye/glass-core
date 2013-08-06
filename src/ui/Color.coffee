@@ -165,7 +165,5 @@ Color.yellowgreen = Color 154/255, 205/255,50/255
 exports.test = do ->
     assert = require('chai').assert
     "toRgbaString(Color.white) should yield rgba(255,255,255,1)": ->
-        console.log JSON.stringify Color.white
-        console.log JSON.stringify Color.toRgbaString(Color.white)
         assert.equal Color.toRgbaString(Color.white), 'rgba(255,255,255,1)'
 

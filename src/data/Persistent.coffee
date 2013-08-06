@@ -4,6 +4,8 @@ module.exports = Persistent = (require '../Component').extend
     id: module.id
     persistent: true
     properties:
+        id:
+            required: true
         initialize: initialize = ->
             # there MUST be an id and it must be a valid key with no query
             namespace = Key.getNamespaceFromModuleId @constructor.id
