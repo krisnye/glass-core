@@ -1,7 +1,7 @@
 require './global'
 
 isPrimitive = (object) ->
-    Object.isNumber(object) or Object.isBoolean(object) or Object.isString(object)
+    not object? or Object.isNumber(object) or Object.isBoolean(object) or Object.isString(object)
 
 normalizeProperty = (name, property, defaults) ->
     if Object.isFunction(property)
@@ -50,6 +50,7 @@ defineProperties exports,
     normalizeProperty: normalizeProperty
     normalizeProperties: normalizeProperties
     defineProperties: defineProperties
+    nextTick: (fn) -> setTimeout fn, 0
     first: (a) ->
         if not a?
             return null

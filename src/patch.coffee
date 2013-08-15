@@ -128,7 +128,6 @@ exports.test =
                         Two: 2
                 Orion: {}
         target = Object.clone source
-        console.log 'WATCHING'
         unwatch = watch source, (patch) ->
             target = apply target, patch
             # test that source and target are equivalent

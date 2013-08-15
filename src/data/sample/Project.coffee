@@ -15,6 +15,9 @@ module.exports = Project = (require '../Persistent').extend
             required: true
             minLength: 2
             maxLength: 128
+        active:
+            type: 'boolean'
+            index: true
         complete:
             type: 'integer'
             minimum: 0

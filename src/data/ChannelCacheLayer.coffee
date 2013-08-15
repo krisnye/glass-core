@@ -1,4 +1,5 @@
 AjaxLayer = require './AjaxLayer'
+Key = require './Key'
 
 module.exports = exports = ChannelCacheLayer = (require './CacheLayer').extend
     id: module.id
@@ -12,8 +13,10 @@ module.exports = exports = ChannelCacheLayer = (require './CacheLayer').extend
 
             @openChannel()
             @inner initialize
+        namespace:
+            type: 'string'
+            required: true
         openChannel: ->
-            return
             ajaxLayer = @get AjaxLayer
             ajaxLayer.headers[require('./').watchHeader] ?= 'true'
             # we send our channel open request directly through the AjaxLayer
@@ -22,15 +25,18 @@ module.exports = exports = ChannelCacheLayer = (require './CacheLayer').extend
                 @channel = new goog.appengine.Channel token
                 @channelSocket = @channel.open
                     onopen: =>
-                        console.log 'CHANNEL OPEN'
+                        # console.log 'CHANNEL OPEN'
                     onerror: (e) =>
                         console.log 'CHANNEL ERROR'
                         console.log e
                     onmessage: (message) =>
-                        console.log 'CHANNEL MESSAGE'
-                        console.log message.data
+                        # console.log 'CHANNEL MESSAGE', message.data
+                        json = JSON.parse message.data
+                        for id, value of json
+                            key = new Key @namespace, id
+                            @_patchLocal key, value
                     onclose: =>
-                        console.log 'CHANNEL CLOSE'
+                        # console.log 'CHANNEL CLOSE'
             # 
         # patch: patch = (key, object) ->
         #     @inner patch, key, object

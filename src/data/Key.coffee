@@ -73,14 +73,24 @@ module.exports = exports = class Key
             catch e
                 throw new Error "#{JSON.stringify typeId} not found in key: #{JSON.stringify path} (#{e})"
         # shallow freeze these properties (we don't want to freeze the type)
+        s = @_toStringValue = stringify @
+        @path =
+            if @query?
+                s.substring 0, s.indexOf('?')
+            else
+                s
         glass.freeze @, false
         return @
-    isAncestor: (key) ->
-        return false unless key? and @parent
-        if @parent.toString() is key.toString()
-            return true
-        else
-            return @parent.isAncestor key
+glass.defineProperties Key.prototype,
+    isAncestor: (key) -> key? and @path.startsWith key
+    isMatch: (key, object) ->
+        # first check parentage
+        return false unless key.toString().startsWith(@path)
+        # then check query
+        if @query?.if?
+            return false unless object?
+            return require('./query').matches(@query.if, object)
+        return true
     toString: -> @_toStringValue ?= stringify @
     valueOf: -> @toString()
     toJSON: -> @toString()
@@ -93,12 +103,12 @@ Key.getNamespaceFromModuleId = (moduleId) ->
 exports.test = do ->
     assert = require('chai').assert
     toString: ->
-        key = new Key "./sample/", 'Project/2/Task/2?{"alpha":2}'
+        key = new Key "./sample/", 'Project/2/Task/2?{"if":{"alpha":2}}'
         assert key.parent instanceof Key
         assert.equal key.parent.toString(), 'Project/2'
-        assert.equal key.query.alpha, '2'
+        assert.equal key.query.if.alpha, '2'
     frozen: ->
-        key = new Key "./sample/", 'Project/2/Task/2?{"alpha":2}'
+        key = new Key "./sample/", 'Project/2/Task/2?{"if":{"alpha":2}}'
         # try to set a value, should fail
         key.query.beta = 3
         assert.equal key.query.beta, undefined
@@ -108,17 +118,29 @@ exports.test = do ->
         key1 = new Key key0.namespace, key0, Key, "12"
         assert key1?
     isAncestor: ->
-        key1 = new Key "./sample/", 'User/3/Project/2/Task/2?{"alpha":2}'
-        assert key1.isAncestor "User/3"
+        key1 = new Key "./sample/", 'User/3/Project/2/Task/2?{"if":{"alpha":2}}'
+        assert key1.isAncestor new Key "./sample/", "User/3"
         assert key1.isAncestor "User/3/Project/2"
         assert not key1.isAncestor "Project/2"
         assert not key1.isAncestor "Task/2"
     creation: ->
-        key1 = new Key "./sample/", 'Project/2/Task/2?{"alpha":2}'
-        key2 = new Key "./sample/", 'Project', '2', 'Task', '2', {"alpha":2}
+        key1 = new Key "./sample/", 'Project/2/Task/2?{"if":{"alpha":2}}'
+        key2 = new Key "./sample/", 'Project', '2', 'Task', '2', {"if":{"alpha":2}}
         assert.deepEqual key1, key2
         key3 = new Key "./sample/", null, 'Project', 'me'
         assert.equal 'Project/me', key3.toString()
+    path: ->
+        key1 = new Key "./sample/", 'Project/2/Task/2?{"if":{"alpha":2}}'
+        key2 = new Key "./sample/", 'Project/2/Task/2'
+        assert.equal key1.path, 'Project/2/Task/2'
+        assert.equal key2.path, 'Project/2/Task/2'
+    isMatch: ->
+        key1 = new Key "./sample/", 'Project/2/Task/2?{"if":{"alpha":2}}'
+        key2 = new Key "./sample/", 'Project/2/Task/2/Task/3'
+        assert key1.isMatch key2, {alpha:2}
+        assert not key1.isMatch key2, {alpha:3}
+        key3 = new Key "./sample/", 'Project/2/Task/3/Task/3'
+        assert not key1.isMatch key3, {alpha:2}
     join: ->
         path = Key.join "Foo", "12314123"
         assert.equal "Foo/12314123", path

@@ -131,10 +131,61 @@ properties =
                 delete @_parent[@id]
             @inner dispose
             @_state = state.disposed
+            # call any onDisposed handlers
+            if @_onDisposed?
+                for handler in @_onDisposed
+                    handler.call @
         return
     disposed:
         get: -> @_state >= state.disposed
         serialize: false
+    onDisposed: (handler) -> (@_onDisposed ?= []).push handler
+    # reactive assignment
+    set:
+        description: """
+            Sets the named property to the value of the specified expression function
+            and watches for changes to the dependent properties
+            this component is both the target for the property
+            and the context for the expression.
+            The property will not be set if it the result is undefined.
+            """
+        value: (name, expression) ->
+            unwatch = require('./reactive').set @, name, @, expression
+            # unwatch when we are disposed
+            @onDisposed unwatch
+    addEach: (path, predicate, type, properties) ->
+        if not Object.isFunction type
+            properties = type
+            type = predicate
+            predicate = null
+        @forEach path, predicate, (name, value) =>
+            if value is undefined
+                @[name]?.dispose?()
+            else
+                initialProperties = null
+                if Object.isFunction properties
+                    initialProperties = properties.call @, value
+                else if Object.isObject properties
+                    initialProperties = Object.clone properties
+                    if typeof value is 'object'
+                        Object.merge initialProperties, value
+                    else
+                        initialProperties.value = value
+                else if Object.isObject value
+                    initialProperties = Object.clone value
+                initialProperties.id = name
+                initialProperties.parent = @
+                new type initialProperties
+
+    forEach: (path, predicate, eachHandler) ->
+        if not eachHandler?
+            eachHandler = predicate
+            predicate = null
+        # make sure eachHandler is bound to this
+        eachHandler = eachHandler.bind @
+        unwatch = require('./reactive').watchPathForEach @, path, predicate, eachHandler
+        # unwatch when we are disposed
+        @onDisposed unwatch
     # serialization
     toJSON: ->
         values = {}
@@ -283,6 +334,55 @@ extend = (baseClass, subClassDefinition) ->
 
 assert = require('chai').assert
 exports.test =
+    forEach: (done) ->
+        return unless Object.observe?
+        root = new Component
+        count = 0
+        root.forEach "my.boxes", (name, value) ->
+            if count++ is 0
+                delete root.my.boxes.a
+                root.my.boxes.c = {width:50,height:60}
+            if value?
+                properties = Object.clone value
+                properties.id = name
+                properties.parent = root
+                # create a new child
+                new Component properties
+            else
+                root[name]?.dispose?()
+            # check to see if we are done
+            if root.a is undefined and root.b? and root.c?
+                root.dispose()
+                done()
+        glass.nextTick ->
+            root.my =
+                boxes:
+                    a: {width:10,height:20}
+                    b: {width:30,height:40}
+        done()
+
+    set: (done) ->
+        return unless Object.observe?
+        a = new Component
+        a.set 'area', -> @width * @height
+        Object.observe a, observer = (changes) ->
+            if a.area is 200
+                Object.unobserve a, observer
+                a.dispose()
+                return done()
+        a.width = 20
+        a.height = 10
+    "onDisposed": ->
+        a = new Component
+        callCount = 0
+        a.onDisposed ->
+            callCount += 1
+            throw new Error "this should be a" unless @ is a
+        a.onDisposed ->
+            callCount += 2
+            throw new Error "this should be a" unless @ is a
+        a.dispose()
+        throw new Error "callCount should be 3: #{callCount}" unless callCount is 3
     "should have an id": ->
         assert Object.isString Component.id
     "its toString should return it's id": ->
