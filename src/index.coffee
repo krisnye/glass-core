@@ -1,3 +1,4 @@
+
 require './global'
 
 isPrimitive = (object) ->
@@ -111,7 +112,7 @@ defineProperties exports,
         return result
 
 exports.test = do ->
-    assert = require('chai').assert
+    assert = require('./assert')
     cache: ->
         count = 0
         cacheCount = exports.cache "_foo", -> ++count

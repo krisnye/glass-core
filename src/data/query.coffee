@@ -44,7 +44,7 @@ glass.defineProperties module.exports,
                     return false
         return true
     test: ->
-        {assert} = require('chai')
+        assert = require('../assert')
         assert matches({}, {})
         assert not matches({a:1}, {})
         assert matches({a:1}, {a:1,b:2})

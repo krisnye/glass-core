@@ -1,4 +1,5 @@
 require './global'
+ion = require 'ion'
 
 # target value should never include reference types from values
 apply = (target, values, deleteNull = true) ->
@@ -53,10 +54,10 @@ watch = (object, handler, callInitial = true) ->
             pendingPatch = null
     # call process patch on the object to watch children
     processPatch object
-    Object.observe object, watcher
+    ion.observe object, watcher
     # return an function that lets us unwatch
     return ->
-        Object.unobserve object, watcher
+        ion.unobserve object, watcher
         # unwatch subWatchers
         for key, value of subWatchers
             value()
@@ -97,8 +98,8 @@ module.exports = exports =
     isChange: isChange
     isEmpty: isEmpty
 
-assert = require('chai').assert
-exports.test = 
+exports.test = do ->
+    assert = require './assert'
     isChange: ->
         assert isChange {a:1}, null
         assert not isChange null, null
@@ -116,7 +117,6 @@ exports.test =
         assert.equal null, diff {a:1}, null
         assert.equal undefined, diff {a:{b:2}}, {a:{b:2}}
     observe: (done) ->
-        return done null, null unless global.window?
         return done null, "Object.observe missing." unless Object.observe?
         source =
             name: 'Kris'

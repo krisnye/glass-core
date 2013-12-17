@@ -101,7 +101,7 @@ Key.getNamespaceFromModuleId = (moduleId) ->
     /^(([^\/\\]+[\/\\])*)/.exec(moduleId)[1]
 
 exports.test = do ->
-    assert = require('chai').assert
+    assert = require '../assert'
     toString: ->
         key = new Key "./sample/", 'Project/2/Task/2?{"if":{"alpha":2}}'
         assert key.parent instanceof Key
@@ -126,7 +126,8 @@ exports.test = do ->
     creation: ->
         key1 = new Key "./sample/", 'Project/2/Task/2?{"if":{"alpha":2}}'
         key2 = new Key "./sample/", 'Project', '2', 'Task', '2', {"if":{"alpha":2}}
-        assert.deepEqual key1, key2
+
+        assert.deepEqual key1.toString(), key2.toString()
         key3 = new Key "./sample/", null, 'Project', 'me'
         assert.equal 'Project/me', key3.toString()
     path: ->

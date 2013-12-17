@@ -35,8 +35,8 @@ glass.defineProperties exports,
                 delete parent[name]
         return
 
-assert = require('chai').assert
-exports.test =
+exports.test = do ->
+    assert = require('./assert')
     forEach: ->
         Person =
             properties:

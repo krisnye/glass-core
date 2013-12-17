@@ -1,26 +1,19 @@
-builder = require 'glass-build'
+fs = require 'fs'
+cp = require 'child_process'
+
+task "install", "installs local and external dependencies", ->
+    ext = if process.platform is 'win32' then '.cmd' else ''
+    if not fs.existsSync "../ion/lib"
+        console.err "You must install ion locally before running this."
+        return process.exit 1
+    fs.mkdirSync "node_modules" if not fs.existsSync "node_modules"
+    fs.symlinkSync "../../ion/lib", "node_modules/ion", "dir" if not fs.existsSync "node_modules/ion"
+    if not fs.existsSync "node_modules/sugar"
+        cp.spawn "npm#{ext}", ["install"], {stdio:'inherit'}
 
 config =
-    name: 'glass-core'
-    source:
-        directory: 'src'
-    node:
-        directory: 'lib'
-    browser:
-        input:
-            '': true
-            'sugar': true
-            'gl-matrix': true
-            'glass-test': true
-            'json-schema': true
-        output:
-            directory: 'www/js'
-            webroot: 'www'
-            test: 'glass-test'
-        port: 9000
+    input: 'src'
+    output: 'lib'
 
-task 'build', -> builder.build config
-task 'watch', -> builder.watch config
-task 'test', -> builder.test config
-task 'bump', -> builder.bump config
-task 'publish', -> builder.publish config
+task "watch", "incrementally builds the project", ->
+    require('ion/builder').runTemplate './build.ion', config
