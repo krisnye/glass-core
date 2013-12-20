@@ -6,7 +6,8 @@ module.exports = DataStack = (require './DataLayer').extend
         layers:
             type: 'array'
             itemType: 'object'
-        initialize: ->
+        initialize: initialize = ->
+            @inner initialize
             unless @layers.length >= 1
                 throw new Error "layers array property is required"
             for layer in @layers by -1

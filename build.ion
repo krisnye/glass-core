@@ -1,21 +1,31 @@
 
 Get our input and output directories from template input
 
-    input = @getDirectory $input
-    output = @getDirectory $output
+    packageFile = @getFile("package.json")
+    package = JSON.parse packageFile.read()
+    input = @getDirectory package.directories.src
+    output = @getDirectory package.directories.lib
 
 Compile coffeescript and add browser module boilerplate
 
     for input.search ".coffee"
         source = .
         target = output.getFile changeExtension key, ".js"
-        [target.path]: compileCoffeeScript source
+        [target.path]: compileCoffeeScript source, package
+
+Copy any plain javascript and add browser module boilerplate
+
+    for input.search ".js"
+        source = .
+        target = output.getFile key
+        [target.path]: shimJavascript source, package
 
 Write a manifest.json file listing all of our modules
 
     outputFiles = output.search(".js")
     manifest = output.getFile "manifest.json"
     [manifest.path]: JSON.stringify outputFiles.*.(key.replace(/\\/g,"/")), null, '    '
+    "MaxLastModified: " + (outputFiles.*.modified).max()
 
 Run tests on all of our output modules
 

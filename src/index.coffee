@@ -16,6 +16,8 @@ normalizeProperty = (name, property, defaults) ->
     if not property.get? and not property.set? and not property.hasOwnProperty('value')
         property.value = undefined
 
+    2
+
     if property.hasOwnProperty 'value'
         # default property values to writable
         property.writable ?= true

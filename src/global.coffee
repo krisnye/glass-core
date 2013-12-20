@@ -1,4 +1,5 @@
-require 'sugar'
+
+require 'ion/sugar'
 
 # get the global object
 global = do -> @

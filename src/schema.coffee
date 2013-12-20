@@ -1,5 +1,5 @@
 glass = require './index'
-jsonSchema = require 'json-schema'
+jsonSchema = require './json-schema'
 
 forEachInternal = (parent, name, object, schema, callback) ->
     # early exit from recursion on false
