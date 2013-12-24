@@ -1,32 +1,15 @@
 
-Get our input and output directories from template input
+Read the package.json
 
-    packageFile = @getFile("package.json")
-    package = JSON.parse packageFile.read()
-    input = @getDirectory package.directories.src
-    output = @getDirectory package.directories.lib
+    package = JSON.parse @getFile("package.json").read()
 
-Compile coffeescript and add browser module boilerplate
+Use the ModuleBuilder template
 
-    for input.search ".coffee"
-        source = .
-        target = output.getFile changeExtension key, ".js"
-        [target.path]: compileCoffeeScript source, package
-
-Copy any plain javascript and add browser module boilerplate
-
-    for input.search ".js"
-        source = .
-        target = output.getFile key
-        [target.path]: shimJavascript source, package
-
-Write a manifest.json file listing all of our modules
-
-    outputFiles = output.search(".js")
-    manifest = output.getFile "manifest.json"
-    [manifest.path]: JSON.stringify outputFiles.*.(key.replace(/\\/g,"/")), null, '    '
-    "MaxLastModified: " + (outputFiles.*.modified).max()
-
-Run tests on all of our output modules
-
-    runTests manifest, outputFiles.*.modified
+    require "ion/builder/ModuleBuilder"
+        name: package.name
+        input: package.directories.src
+        output: package.directories.lib
+        test: true
+        browser:
+            output: "all.js"
+            compress: false
