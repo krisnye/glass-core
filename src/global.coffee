@@ -1,5 +1,5 @@
 
-require 'ion/sugar'
+require 'ion/runtime/sugar'
 
 # get the global object
 global = do -> @

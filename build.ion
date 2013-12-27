@@ -11,5 +11,4 @@ Use the ModuleBuilder template
         output: package.directories.lib
         test: true
         browser:
-            output: "all.js"
             compress: false

@@ -1,6 +1,6 @@
 XMLHttpRequest = require './XMLHttpRequest'
 AjaxLayer = require './AjaxLayer'
-patch = require '../patch'
+patch = require 'ion/runtime/patch'
 Key = require './Key'
 
 module.exports = exports = CacheLayer = (require './DataLayer').extend
